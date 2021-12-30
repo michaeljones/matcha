@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 130
+assertion_line: 276
 expression: "Hello { name }, { adjective } to meet you"
 
 ---

@@ -259,25 +259,29 @@ mod test {
         }};
     }
 
+    // Scan
+
     #[test]
-    fn test_pure_text() {
+    fn test_scan_pure_text() {
         assert_scan!("Hello name, good to meet you");
     }
 
     #[test]
-    fn test_identifier() {
+    fn test_scan_identifier() {
         assert_scan!("Hello { name }, good to meet you");
     }
 
     #[test]
-    fn test_two_identifiers() {
+    fn test_scan_two_identifiers() {
         assert_scan!("Hello { name }, { adjective } to meet you");
     }
 
     #[test]
-    fn test_escaped_parens() {
+    fn test_scan_escaped_parens() {
         assert_scan!("Hello {{ name }}, good to meet you");
     }
+
+    // Parse
 
     #[test]
     fn test_parse_pure_text() {
@@ -293,6 +297,8 @@ mod test {
     fn test_parse_identifier() {
         assert_parse!("Hello { name }, good to meet you");
     }
+
+    // Render
 
     #[test]
     fn test_render_pure_text() {

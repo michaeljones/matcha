@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 153
+assertion_line: 281
 expression: "Hello {{ name }}, good to meet you"
 
 ---

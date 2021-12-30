@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 122
-expression: output
+assertion_line: 271
+expression: "Hello { name }, good to meet you"
 
 ---
 [
