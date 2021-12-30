@@ -1,0 +1,17 @@
+---
+source: src/main.rs
+assertion_line: 211
+expression: "Hello { name }, good to meet you"
+
+---
+[
+    Text(
+        "Hello ",
+    ),
+    Reference(
+        "name",
+    ),
+    Text(
+        ", good to meet you",
+    ),
+]

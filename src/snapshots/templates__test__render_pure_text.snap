@@ -1,0 +1,18 @@
+---
+source: src/main.rs
+assertion_line: 295
+expression: "Hello name, good to meet you"
+
+---
+import gleam/string_builder.{StringBuilder}
+
+pub fn render_builder() -> StringBuilder {
+    let builder = string_builder.from_string("Hello name, good to meet you")
+
+    builder
+}
+
+pub fn render() -> String {
+    string_builder.to_string(render_builder())
+}
+
