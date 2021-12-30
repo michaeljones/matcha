@@ -1,0 +1,27 @@
+---
+source: src/main.rs
+assertion_line: 130
+expression: "Hello { name }, { adjective } to meet you"
+
+---
+[
+    Text(
+        "Hello ",
+    ),
+    OpenParen,
+    Reference(
+        "name",
+    ),
+    CloseParen,
+    Text(
+        ", ",
+    ),
+    OpenParen,
+    Reference(
+        "adjective",
+    ),
+    CloseParen,
+    Text(
+        " to meet you",
+    ),
+]

@@ -1,0 +1,19 @@
+---
+source: src/main.rs
+assertion_line: 122
+expression: output
+
+---
+[
+    Text(
+        "Hello ",
+    ),
+    OpenParen,
+    Reference(
+        "name",
+    ),
+    CloseParen,
+    Text(
+        ", good to meet you",
+    ),
+]
