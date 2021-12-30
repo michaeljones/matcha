@@ -299,4 +299,9 @@ mod test {
     fn test_render_identifier() {
         assert_render!("Hello { name }, good to meet you");
     }
+
+    #[test]
+    fn test_render_two_identifiers() {
+        assert_render!("Hello { name }, { adjective } to meet you");
+    }
 }
