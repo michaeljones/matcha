@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 insta = "1.9.0"
 unicode-segmentation = "1.8.0"
+walkdir = "2.3.2"

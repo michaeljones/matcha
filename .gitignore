@@ -1,1 +1,6 @@
-/target
+*.beam
+*.ez
+build
+erl_crash.dump
+
+/test/template/*.gleam

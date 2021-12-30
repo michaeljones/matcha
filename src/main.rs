@@ -1,4 +1,5 @@
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
+use walkdir::WalkDir;
 
 type Iter<'a> = std::iter::Peekable<GraphemeIndices<'a>>;
 
@@ -197,22 +198,25 @@ pub fn render({}) -> String {{
     output
 }
 
-fn main() {
-    let contents = r#"
-Hi { name },
-
-Welcome to the project.
-
-Kind regards,
-The Team
-"#;
-
-    let tokens = scan(contents);
+fn convert(filepath: &std::path::PathBuf) {
+    let contents = std::fs::read_to_string(filepath).expect("Unable to read file");
+    let tokens = scan(&contents);
     let ast = parse(&mut tokens.iter().peekable());
     let output = render(&mut ast.iter().peekable());
-    println!("{}", output);
+    let mut out_file_path = filepath.clone();
+    out_file_path.set_extension("gleam");
+    std::fs::write(out_file_path, output).expect("Unable to write file");
+}
 
-    ()
+fn main() {
+    for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+
+        if path.extension() == Some(std::ffi::OsStr::new("gleamx")) {
+            println!("{}", path.display());
+            convert(&path.to_path_buf());
+        }
+    }
 }
 
 #[cfg(test)]
