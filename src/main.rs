@@ -6,9 +6,9 @@ type Iter<'a> = std::iter::Peekable<GraphemeIndices<'a>>;
 #[derive(Debug)]
 enum Token {
     Text(String),
-    OpenParen,
-    CloseParen,
-    Reference(String),
+    OpenValue,
+    CloseValue,
+    Identifier(String),
 }
 
 fn scan(contents: &str) -> Vec<Token> {
@@ -29,31 +29,32 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) {
 
                 // Check for escaped '{'
                 if let Some((_, "{")) = iter.peek() {
-                    buffer.push_str("{");
                     iter.next();
-                    continue;
+
+                    tokens.push(Token::Text(buffer));
+                    tokens.push(Token::OpenValue);
+
+                    buffer = String::new();
+
+                    eat_white_space(iter);
+                    let identifier = scan_identifier(iter);
+                    tokens.push(Token::Identifier(identifier));
+                    eat_white_space(iter);
+                } else {
+                    buffer.push('{');
                 }
 
-                tokens.push(Token::Text(buffer));
-                tokens.push(Token::OpenParen);
-                buffer = String::new();
-                eat_white_space(iter);
-                let identifier = scan_identifier(iter);
-                tokens.push(Token::Reference(identifier));
-                eat_white_space(iter);
 
-                // Consume "}"
-                tokens.push(Token::CloseParen);
-                iter.next();
             }
             Some((_index, "}")) => {
                 iter.next();
 
                 // Check for escaped '}'
                 if let Some((_, "}")) = iter.peek() {
-                    buffer.push_str("}");
+                    tokens.push(Token::CloseValue);
                     iter.next();
-                    continue;
+                } else {
+                    buffer.push('}');
                 }
             }
             Some((_index, grapheme)) => {
@@ -117,11 +118,11 @@ fn parse(tokens: &mut TokenIter) -> Vec<Node> {
                 ast.push(Node::Text(text.clone()));
                 tokens.next();
             }
-            Some(Token::Reference(name)) => {
+            Some(Token::Identifier(name)) => {
                 ast.push(Node::Reference(name.clone()));
                 tokens.next();
             }
-            Some(Token::OpenParen) | Some(Token::CloseParen) => {
+            Some(Token::OpenValue) | Some(Token::CloseValue) => {
                 tokens.next();
             }
             None => {
@@ -268,17 +269,22 @@ mod test {
 
     #[test]
     fn test_scan_identifier() {
-        assert_scan!("Hello { name }, good to meet you");
+        assert_scan!("Hello {{ name }}, good to meet you");
     }
 
     #[test]
     fn test_scan_two_identifiers() {
-        assert_scan!("Hello { name }, { adjective } to meet you");
+        assert_scan!("Hello {{ name }}, {{ adjective }} to meet you");
     }
 
     #[test]
-    fn test_scan_escaped_parens() {
-        assert_scan!("Hello {{ name }}, good to meet you");
+    fn test_scan_single_parens() {
+        assert_scan!("Hello { name }, good to meet you");
+    }
+
+    #[test]
+    fn test_scan_if_statement() {
+        assert_scan!("Hello {% if is_user %}User{% endif %}");
     }
 
     // Parse
@@ -289,13 +295,13 @@ mod test {
     }
 
     #[test]
-    fn test_parse_escaped_parens() {
-        assert_parse!("Hello {{ name }}, good to meet you");
+    fn test_parse_single_parens() {
+        assert_parse!("Hello { name }, good to meet you");
     }
 
     #[test]
     fn test_parse_identifier() {
-        assert_parse!("Hello { name }, good to meet you");
+        assert_parse!("Hello {{ name }}, good to meet you");
     }
 
     // Render
@@ -307,11 +313,11 @@ mod test {
 
     #[test]
     fn test_render_identifier() {
-        assert_render!("Hello { name }, good to meet you");
+        assert_render!("Hello {{ name }}, good to meet you");
     }
 
     #[test]
     fn test_render_two_identifiers() {
-        assert_render!("Hello { name }, { adjective } to meet you");
+        assert_render!("Hello {{ name }}, {{ adjective }} to meet you");
     }
 }

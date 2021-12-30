@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 276
+assertion_line: 298
 expression: "Hello { name }, { adjective } to meet you"
 
 ---
@@ -8,19 +8,19 @@ expression: "Hello { name }, { adjective } to meet you"
     Text(
         "Hello ",
     ),
-    OpenParen,
-    Reference(
+    OpenValue,
+    Identifier(
         "name",
     ),
-    CloseParen,
+    CloseValue,
     Text(
         ", ",
     ),
-    OpenParen,
-    Reference(
+    OpenValue,
+    Identifier(
         "adjective",
     ),
-    CloseParen,
+    CloseValue,
     Text(
         " to meet you",
     ),

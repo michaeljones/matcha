@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 271
+assertion_line: 293
 expression: "Hello { name }, good to meet you"
 
 ---
@@ -8,11 +8,11 @@ expression: "Hello { name }, good to meet you"
     Text(
         "Hello ",
     ),
-    OpenParen,
-    Reference(
+    OpenValue,
+    Identifier(
         "name",
     ),
-    CloseParen,
+    CloseValue,
     Text(
         ", good to meet you",
     ),
