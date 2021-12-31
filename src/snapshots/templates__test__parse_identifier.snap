@@ -1,14 +1,14 @@
 ---
 source: src/main.rs
-assertion_line: 211
-expression: "Hello { name }, good to meet you"
+assertion_line: 446
+expression: "Hello {{ name }}, good to meet you"
 
 ---
 [
     Text(
         "Hello ",
     ),
-    Reference(
+    Indentifier(
         "name",
     ),
     Text(

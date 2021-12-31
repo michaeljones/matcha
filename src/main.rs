@@ -1,55 +1,91 @@
+use log;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
 
+// Scanning
+
 type Iter<'a> = std::iter::Peekable<GraphemeIndices<'a>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 enum Token {
     Text(String),
     OpenValue,
     CloseValue,
     Identifier(String),
+    OpenStmt,
+    CloseStmt,
+    If,
+    EndIf,
 }
 
-fn scan(contents: &str) -> Vec<Token> {
+#[derive(Debug)]
+enum ScanError {
+    UnknownKeyword(String),
+}
+
+fn scan(contents: &str) -> Result<Vec<Token>, ScanError> {
+    log::trace!("scan");
     let iter = contents.grapheme_indices(true);
     let mut tokens = vec![];
 
-    scan_plain(&mut iter.peekable(), &mut tokens);
+    scan_plain(&mut iter.peekable(), &mut tokens)?;
 
-    tokens
+    Ok(tokens)
 }
 
-fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) {
+fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError> {
+    log::trace!("scan_plain");
     let mut buffer = String::new();
     loop {
         match iter.peek() {
             Some((_index, "{")) => {
                 iter.next();
 
-                // Check for escaped '{'
                 if let Some((_, "{")) = iter.peek() {
-                    iter.next();
+                    if !buffer.is_empty() {
+                        tokens.push(Token::Text(buffer));
+                        buffer = String::new();
+                    }
 
-                    tokens.push(Token::Text(buffer));
                     tokens.push(Token::OpenValue);
-
-                    buffer = String::new();
+                    iter.next();
 
                     eat_white_space(iter);
                     let identifier = scan_identifier(iter);
                     tokens.push(Token::Identifier(identifier));
                     eat_white_space(iter);
+                } else if let Some((_, "%")) = iter.peek() {
+                    if !buffer.is_empty() {
+                        tokens.push(Token::Text(buffer));
+                        buffer = String::new();
+                    }
+
+                    tokens.push(Token::OpenStmt);
+                    iter.next();
+
+                    eat_white_space(iter);
+                    let identifier = scan_identifier(iter);
+                    let keyword_token = identifier_to_token(&identifier)?;
+                    tokens.push(keyword_token.clone());
+
+                    match keyword_token {
+                        Token::If => {
+                            eat_white_space(iter);
+
+                            let identifier = scan_identifier(iter);
+                            tokens.push(Token::Identifier(identifier));
+                        }
+                        _ => {}
+                    }
+
+                    eat_white_space(iter);
                 } else {
                     buffer.push('{');
                 }
-
-
             }
             Some((_index, "}")) => {
                 iter.next();
 
-                // Check for escaped '}'
                 if let Some((_, "}")) = iter.peek() {
                     tokens.push(Token::CloseValue);
                     iter.next();
@@ -57,15 +93,35 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) {
                     buffer.push('}');
                 }
             }
+            Some((_index, "%")) => {
+                iter.next();
+
+                if let Some((_, "}")) = iter.peek() {
+                    tokens.push(Token::CloseStmt);
+                    iter.next();
+                } else {
+                    buffer.push('%');
+                }
+            }
             Some((_index, grapheme)) => {
                 buffer.push_str(grapheme);
                 iter.next();
             }
             _ => {
-                tokens.push(Token::Text(buffer));
-                return;
+                if !buffer.is_empty() {
+                    tokens.push(Token::Text(buffer));
+                }
+                return Ok(());
             }
         }
+    }
+}
+
+fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
+    match identifier {
+        "if" => Ok(Token::If),
+        "endif" => Ok(Token::EndIf),
+        _ => Err(ScanError::UnknownKeyword(identifier.to_string())),
     }
 }
 
@@ -74,7 +130,7 @@ fn scan_identifier(iter: &mut Iter) -> String {
 
     loop {
         match iter.peek() {
-            Some((_index, "}")) | Some((_index, " ")) => {
+            Some((_index, "}")) | Some((_index, " ")) | Some((_index, "%")) => {
                 break;
             }
             Some((_index, grapheme)) => {
@@ -101,15 +157,25 @@ fn eat_white_space(iter: &mut Iter) {
     }
 }
 
+// Parsing
+
 type TokenIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Token>>;
 
 #[derive(Debug)]
 enum Node {
     Text(String),
-    Reference(String),
+    Indentifier(String),
+    If(String, Vec<Node>),
 }
 
-fn parse(tokens: &mut TokenIter) -> Vec<Node> {
+#[derive(Debug)]
+enum ParserError {
+    UnexpectedToken(Token),
+    UnexpectedEnd,
+}
+
+fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
+    log::trace!("parse");
     let mut ast = vec![];
 
     loop {
@@ -119,11 +185,20 @@ fn parse(tokens: &mut TokenIter) -> Vec<Node> {
                 tokens.next();
             }
             Some(Token::Identifier(name)) => {
-                ast.push(Node::Reference(name.clone()));
+                ast.push(Node::Indentifier(name.clone()));
                 tokens.next();
             }
-            Some(Token::OpenValue) | Some(Token::CloseValue) => {
+            Some(Token::OpenValue)
+            | Some(Token::CloseValue)
+            | Some(Token::CloseStmt)
+            | Some(Token::If)
+            | Some(Token::EndIf) => {
                 tokens.next();
+            }
+            Some(Token::OpenStmt) => {
+                tokens.next();
+                let node = parse_if_statement(tokens)?;
+                ast.push(node);
             }
             None => {
                 break;
@@ -131,57 +206,81 @@ fn parse(tokens: &mut TokenIter) -> Vec<Node> {
         }
     }
 
-    ast
+    Ok(ast)
 }
+
+fn parse_inner(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
+    log::trace!("parse_inner");
+    let mut ast = vec![];
+
+    loop {
+        match tokens.peek() {
+            Some(Token::Text(text)) => {
+                ast.push(Node::Text(text.clone()));
+                tokens.next();
+            }
+            Some(Token::OpenStmt) => {
+                tokens.next();
+                if let Some(Token::EndIf) = tokens.peek() {
+                    break;
+                }
+            }
+            _ => {
+                break;
+            }
+        }
+    }
+
+    Ok(ast)
+}
+
+fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
+    log::trace!("parse_if_statement");
+    consume_token(tokens, Token::If)?;
+    let name = extract_identifier(tokens)?;
+    consume_token(tokens, Token::CloseStmt)?;
+
+    let if_nodes = parse_inner(tokens)?;
+
+    consume_token(tokens, Token::EndIf)?;
+    consume_token(tokens, Token::CloseStmt)?;
+
+    Ok(Node::If(name, if_nodes))
+}
+
+fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
+    log::trace!("extract_identifier");
+    match tokens.next() {
+        Some(Token::Identifier(name)) => Ok(name.clone()),
+        Some(token) => Err(ParserError::UnexpectedToken(token.clone())),
+        None => Err(ParserError::UnexpectedEnd),
+    }
+}
+
+fn consume_token(tokens: &mut TokenIter, token: Token) -> Result<(), ParserError> {
+    log::trace!("consume_token");
+    let next_token = tokens.next();
+    if next_token == Some(&token) {
+        Ok(())
+    } else {
+        Err(next_token
+            .map(|token_value| ParserError::UnexpectedToken(token_value.clone()))
+            .unwrap_or(ParserError::UnexpectedEnd))
+    }
+}
+
+// Rendering
 
 type NodeIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Node>>;
 
 fn render(iter: &mut NodeIter) -> String {
-    let mut builder_lines = String::new();
-    let mut params = vec![];
-    let mut has_builder = false;
-
-    loop {
-        match iter.peek() {
-            Some(Node::Text(text)) => {
-                iter.next();
-                if has_builder {
-                    builder_lines.push_str(&format!(
-                        "    let builder = string_builder.append(builder, \"{}\")\n",
-                        text
-                    ));
-                } else {
-                    builder_lines.push_str(&format!(
-                        "    let builder = string_builder.from_string(\"{}\")\n",
-                        text
-                    ));
-                    has_builder = true;
-                }
-            }
-            Some(Node::Reference(name)) => {
-                iter.next();
-                if has_builder {
-                    builder_lines.push_str(&format!(
-                        "    let builder = string_builder.append(builder, {})\n",
-                        name
-                    ));
-                } else {
-                    builder_lines.push_str(&format!(
-                        "    let builder = string_builder.from_string({})\n",
-                        name
-                    ));
-                    has_builder = true;
-                }
-                params.push(name.clone());
-            }
-            None => break,
-        }
-    }
+    let (builder_lines, params) = render_lines(iter);
 
     let output = format!(
         r#"import gleam/string_builder.{{StringBuilder}}
 
 pub fn render_builder({}) -> StringBuilder {{
+    let builder = string_builder.from_string("")
 {}
     builder
 }}
@@ -199,10 +298,54 @@ pub fn render({}) -> String {{
     output
 }
 
+fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
+    let mut builder_lines = String::new();
+    let mut params = vec![];
+
+    loop {
+        match iter.peek() {
+            Some(Node::Text(text)) => {
+                iter.next();
+                builder_lines.push_str(&format!(
+                    "    let builder = string_builder.append(builder, \"{}\")\n",
+                    text
+                ));
+            }
+            Some(Node::Indentifier(name)) => {
+                iter.next();
+                builder_lines.push_str(&format!(
+                    "    let builder = string_builder.append(builder, {})\n",
+                    name
+                ));
+                params.push(name.clone());
+            }
+            Some(Node::If(identifier_name, if_nodes)) => {
+                iter.next();
+                let (if_lines, mut if_params) = render_lines(&mut if_nodes.iter().peekable());
+                builder_lines.push_str(&format!(
+                    r#"let builder = case {} {{
+    True -> {{
+        {}
+        builder
+    }}
+    False -> builder
+}}"#,
+                    identifier_name, if_lines
+                ));
+                params.push(identifier_name.clone());
+                params.append(&mut if_params);
+            }
+            None => break,
+        }
+    }
+
+    (builder_lines, params)
+}
+
 fn convert(filepath: &std::path::PathBuf) {
     let contents = std::fs::read_to_string(filepath).expect("Unable to read file");
-    let tokens = scan(&contents);
-    let ast = parse(&mut tokens.iter().peekable());
+    let tokens = scan(&contents).expect("Unable to scan");
+    let ast = parse(&mut tokens.iter().peekable()).expect("Unable to parse file");
     let output = render(&mut ast.iter().peekable());
     let mut out_file_path = filepath.clone();
     out_file_path.set_extension("gleam");
@@ -227,9 +370,10 @@ mod test {
     #[macro_export]
     macro_rules! assert_scan {
         ($text:expr $(,)?) => {{
+            let _ = env_logger::try_init();
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                format!("{:#?}", scan($text)),
+                format!("{:#?}", scan($text).expect("Scan failed")),
                 $text
             );
         }};
@@ -238,10 +382,14 @@ mod test {
     #[macro_export]
     macro_rules! assert_parse {
         ($text:expr $(,)?) => {{
-            let tokens = scan($text);
+            let _ = env_logger::try_init();
+            let tokens = scan($text).expect("Scan failed");
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                format!("{:#?}", parse(&mut tokens.iter().peekable())),
+                format!(
+                    "{:#?}",
+                    parse(&mut tokens.iter().peekable()).expect("Parse failed")
+                ),
                 $text
             );
         }};
@@ -250,8 +398,9 @@ mod test {
     #[macro_export]
     macro_rules! assert_render {
         ($text:expr $(,)?) => {{
-            let tokens = scan($text);
-            let ast = parse(&mut tokens.iter().peekable());
+            let _ = env_logger::try_init();
+            let tokens = scan($text).expect("Scan failed");
+            let ast = parse(&mut tokens.iter().peekable()).expect("Parse failed");
             insta::assert_snapshot!(
                 insta::internals::AutoName,
                 render(&mut ast.iter().peekable()),
@@ -304,6 +453,16 @@ mod test {
         assert_parse!("Hello {{ name }}, good to meet you");
     }
 
+    #[test]
+    fn test_parse_if_statement() {
+        assert_parse!("Hello {% if is_user %}User{% endif %}");
+    }
+
+    #[test]
+    fn test_parse_empty_if_statement() {
+        assert_parse!("Hello {% if is_user %}{% endif %}");
+    }
+
     // Render
 
     #[test]
@@ -319,5 +478,15 @@ mod test {
     #[test]
     fn test_render_two_identifiers() {
         assert_render!("Hello {{ name }}, {{ adjective }} to meet you");
+    }
+
+    #[test]
+    fn test_render_if_statement() {
+        assert_render!("Hello {% if is_user %}User{% endif %}");
+    }
+
+    #[test]
+    fn test_render_empty_if_statement() {
+        assert_render!("Hello {% if is_user %}{% endif %}");
     }
 }

@@ -1,0 +1,15 @@
+---
+source: src/main.rs
+assertion_line: 463
+expression: "Hello {% if is_user %}{% endif %}"
+
+---
+[
+    Text(
+        "Hello ",
+    ),
+    If(
+        "is_user",
+        [],
+    ),
+]
