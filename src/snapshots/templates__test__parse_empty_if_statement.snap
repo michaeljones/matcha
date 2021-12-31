@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 463
+assertion_line: 493
 expression: "Hello {% if is_user %}{% endif %}"
 
 ---
@@ -10,6 +10,7 @@ expression: "Hello {% if is_user %}{% endif %}"
     ),
     If(
         "is_user",
+        [],
         [],
     ),
 ]

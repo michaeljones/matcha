@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 488
-expression: "Hello {% if is_user %}User{% endif %}"
+assertion_line: 498
+expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
 
 ---
 [
@@ -15,6 +15,10 @@ expression: "Hello {% if is_user %}User{% endif %}"
                 "User",
             ),
         ],
-        [],
+        [
+            Text(
+                "Unknown",
+            ),
+        ],
     ),
 ]

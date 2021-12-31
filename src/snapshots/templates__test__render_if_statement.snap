@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 485
+assertion_line: 520
 expression: "Hello {% if is_user %}User{% endif %}"
 
 ---
@@ -15,7 +15,10 @@ let builder = case is_user {
 
         builder
     }
-    False -> builder
+    False -> {
+        
+        builder
+    }
 }
     builder
 }

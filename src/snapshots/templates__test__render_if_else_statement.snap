@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 525
-expression: "Hello {% if is_user %}{% endif %}"
+assertion_line: 530
+expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -11,11 +11,13 @@ pub fn render_builder(is_user) -> StringBuilder {
     let builder = string_builder.append(builder, "Hello ")
 let builder = case is_user {
     True -> {
-        
+            let builder = string_builder.append(builder, "User")
+
         builder
     }
     False -> {
-        
+            let builder = string_builder.append(builder, "Unknown")
+
         builder
     }
 }

@@ -15,6 +15,7 @@ enum Token {
     OpenStmt,
     CloseStmt,
     If,
+    Else,
     EndIf,
 }
 
@@ -120,6 +121,7 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
 fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
     match identifier {
         "if" => Ok(Token::If),
+        "else" => Ok(Token::Else),
         "endif" => Ok(Token::EndIf),
         _ => Err(ScanError::UnknownKeyword(identifier.to_string())),
     }
@@ -165,7 +167,7 @@ type TokenIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Token>>;
 enum Node {
     Text(String),
     Indentifier(String),
-    If(String, Vec<Node>),
+    If(String, Vec<Node>, Vec<Node>),
 }
 
 #[derive(Debug)]
@@ -192,6 +194,7 @@ fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
             | Some(Token::CloseValue)
             | Some(Token::CloseStmt)
             | Some(Token::If)
+            | Some(Token::Else)
             | Some(Token::EndIf) => {
                 tokens.next();
             }
@@ -221,7 +224,7 @@ fn parse_inner(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
             }
             Some(Token::OpenStmt) => {
                 tokens.next();
-                if let Some(Token::EndIf) = tokens.peek() {
+                if let Some(Token::Else) | Some(Token::EndIf) = tokens.peek() {
                     break;
                 }
             }
@@ -241,11 +244,28 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     consume_token(tokens, Token::CloseStmt)?;
 
     let if_nodes = parse_inner(tokens)?;
+    let mut else_nodes = vec![];
 
-    consume_token(tokens, Token::EndIf)?;
-    consume_token(tokens, Token::CloseStmt)?;
+    match tokens.next() {
+        Some(Token::EndIf) => {
+            consume_token(tokens, Token::CloseStmt)?;
+        }
+        Some(Token::Else) => {
+            consume_token(tokens, Token::CloseStmt)?;
 
-    Ok(Node::If(name, if_nodes))
+            else_nodes = parse_inner(tokens)?;
+            consume_token(tokens, Token::EndIf)?;
+            consume_token(tokens, Token::CloseStmt)?;
+        }
+        Some(token) => {
+            return Err(ParserError::UnexpectedToken(token.clone()));
+        }
+        None => {
+            return Err(ParserError::UnexpectedEnd);
+        }
+    }
+
+    Ok(Node::If(name, if_nodes, else_nodes))
 }
 
 fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
@@ -319,21 +339,26 @@ fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
                 ));
                 params.push(name.clone());
             }
-            Some(Node::If(identifier_name, if_nodes)) => {
+            Some(Node::If(identifier_name, if_nodes, else_nodes)) => {
                 iter.next();
                 let (if_lines, mut if_params) = render_lines(&mut if_nodes.iter().peekable());
+                let (else_lines, mut else_params) = render_lines(&mut else_nodes.iter().peekable());
                 builder_lines.push_str(&format!(
                     r#"let builder = case {} {{
     True -> {{
         {}
         builder
     }}
-    False -> builder
+    False -> {{
+        {}
+        builder
+    }}
 }}"#,
-                    identifier_name, if_lines
+                    identifier_name, if_lines, else_lines
                 ));
                 params.push(identifier_name.clone());
                 params.append(&mut if_params);
+                params.append(&mut else_params);
             }
             None => break,
         }
@@ -436,6 +461,11 @@ mod test {
         assert_scan!("Hello {% if is_user %}User{% endif %}");
     }
 
+    #[test]
+    fn test_scan_if_else_statement() {
+        assert_scan!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
+    }
+
     // Parse
 
     #[test]
@@ -463,6 +493,11 @@ mod test {
         assert_parse!("Hello {% if is_user %}{% endif %}");
     }
 
+    #[test]
+    fn test_parse_if_else_statement() {
+        assert_parse!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
+    }
+
     // Render
 
     #[test]
@@ -488,5 +523,10 @@ mod test {
     #[test]
     fn test_render_empty_if_statement() {
         assert_render!("Hello {% if is_user %}{% endif %}");
+    }
+
+    #[test]
+    fn test_render_if_else_statement() {
+        assert_render!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
     }
 }
