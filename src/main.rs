@@ -178,57 +178,49 @@ enum ParserError {
 
 fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
     log::trace!("parse");
-    let mut ast = vec![];
-
-    loop {
-        match tokens.peek() {
-            Some(Token::Text(text)) => {
-                ast.push(Node::Text(text.clone()));
-                tokens.next();
-            }
-            Some(Token::Identifier(name)) => {
-                ast.push(Node::Indentifier(name.clone()));
-                tokens.next();
-            }
-            Some(Token::OpenValue)
-            | Some(Token::CloseValue)
-            | Some(Token::CloseStmt)
-            | Some(Token::If)
-            | Some(Token::Else)
-            | Some(Token::EndIf) => {
-                tokens.next();
-            }
-            Some(Token::OpenStmt) => {
-                tokens.next();
-                let node = parse_if_statement(tokens)?;
-                ast.push(node);
-            }
-            None => {
-                break;
-            }
-        }
-    }
-
-    Ok(ast)
+    parse_inner(tokens, false)
 }
 
-fn parse_inner(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
+fn parse_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
+    match tokens.next() {
+        Some(Token::If) => parse_if_statement(tokens),
+        Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
+        None => {
+            return Err(ParserError::UnexpectedEnd);
+        }
+    }
+}
+
+fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, ParserError> {
     log::trace!("parse_inner");
     let mut ast = vec![];
 
     loop {
-        match tokens.peek() {
+        match tokens.next() {
             Some(Token::Text(text)) => {
                 ast.push(Node::Text(text.clone()));
-                tokens.next();
+            }
+            Some(Token::OpenValue) => {
+                let name = extract_identifier(tokens)?;
+                ast.push(Node::Indentifier(name.clone()));
+                consume_token(tokens, Token::CloseValue)?;
             }
             Some(Token::OpenStmt) => {
-                tokens.next();
                 if let Some(Token::Else) | Some(Token::EndIf) = tokens.peek() {
-                    break;
+                    if in_statement {
+                        break;
+                    } else {
+                        match tokens.next() {
+                            Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
+                            None => return Err(ParserError::UnexpectedEnd),
+                        }
+                    }
                 }
+                let node = parse_statement(tokens)?;
+                ast.push(node);
             }
-            _ => {
+            Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
+            None => {
                 break;
             }
         }
@@ -239,11 +231,10 @@ fn parse_inner(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
 
 fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     log::trace!("parse_if_statement");
-    consume_token(tokens, Token::If)?;
     let name = extract_identifier(tokens)?;
     consume_token(tokens, Token::CloseStmt)?;
 
-    let if_nodes = parse_inner(tokens)?;
+    let if_nodes = parse_inner(tokens, true)?;
     let mut else_nodes = vec![];
 
     match tokens.next() {
@@ -253,7 +244,7 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
         Some(Token::Else) => {
             consume_token(tokens, Token::CloseStmt)?;
 
-            else_nodes = parse_inner(tokens)?;
+            else_nodes = parse_inner(tokens, true)?;
             consume_token(tokens, Token::EndIf)?;
             consume_token(tokens, Token::CloseStmt)?;
         }
@@ -296,6 +287,18 @@ type NodeIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Node>>;
 fn render(iter: &mut NodeIter) -> String {
     let (builder_lines, params) = render_lines(iter);
 
+    let params_string = params
+        .iter()
+        .map(|value| format!("{} {}", value, value))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let args_string = params
+        .iter()
+        .map(|value| format!("{}: {}", value, value))
+        .collect::<Vec<_>>()
+        .join(", ");
+
     let output = format!(
         r#"import gleam/string_builder.{{StringBuilder}}
 
@@ -309,10 +312,7 @@ pub fn render({}) -> String {{
     string_builder.to_string(render_builder({}))
 }}
 "#,
-        params.join(", "),
-        builder_lines,
-        params.join(", "),
-        params.join(", "),
+        params_string, builder_lines, params_string, args_string
     );
 
     output
@@ -466,6 +466,13 @@ mod test {
         assert_scan!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
     }
 
+    #[test]
+    fn test_scan_nested_if_statements() {
+        assert_scan!(
+            "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
+        );
+    }
+
     // Parse
 
     #[test]
@@ -498,6 +505,13 @@ mod test {
         assert_parse!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
     }
 
+    #[test]
+    fn test_parse_nested_if_statements() {
+        assert_parse!(
+            "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
+        );
+    }
+
     // Render
 
     #[test]
@@ -528,5 +542,12 @@ mod test {
     #[test]
     fn test_render_if_else_statement() {
         assert_render!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
+    }
+
+    #[test]
+    fn test_render_nested_if_statements() {
+        assert_render!(
+            "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
+        );
     }
 }

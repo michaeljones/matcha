@@ -1,12 +1,12 @@
 ---
 source: src/main.rs
-assertion_line: 525
+assertion_line: 539
 expression: "Hello {% if is_user %}{% endif %}"
 
 ---
 import gleam/string_builder.{StringBuilder}
 
-pub fn render_builder(is_user) -> StringBuilder {
+pub fn render_builder(is_user is_user) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello ")
 let builder = case is_user {
@@ -22,7 +22,7 @@ let builder = case is_user {
     builder
 }
 
-pub fn render(is_user) -> String {
-    string_builder.to_string(render_builder(is_user))
+pub fn render(is_user is_user) -> String {
+    string_builder.to_string(render_builder(is_user: is_user))
 }
 

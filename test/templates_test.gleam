@@ -5,6 +5,7 @@ import template/identifier
 import template/two_identifiers
 import template/if_statement
 import template/if_else_statement
+import template/nested_if_statement
 
 pub fn main() {
   gleeunit.main()
@@ -40,4 +41,15 @@ pub fn if_else_statement_test() {
 
   if_else_statement.render(False)
   |> should.equal("Hello Unknown\n")
+}
+
+pub fn nested_if_statement_test() {
+  nested_if_statement.render(is_user: True, is_admin: True)
+  |> should.equal("Hello Admin\n")
+
+  nested_if_statement.render(is_user: True, is_admin: False)
+  |> should.equal("Hello User\n")
+
+  nested_if_statement.render(is_user: False, is_admin: False)
+  |> should.equal("Hello\n")
 }

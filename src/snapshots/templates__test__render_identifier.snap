@@ -1,12 +1,12 @@
 ---
 source: src/main.rs
-assertion_line: 463
+assertion_line: 524
 expression: "Hello {{ name }}, good to meet you"
 
 ---
 import gleam/string_builder.{StringBuilder}
 
-pub fn render_builder(name) -> StringBuilder {
+pub fn render_builder(name name) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello ")
     let builder = string_builder.append(builder, name)
@@ -15,7 +15,7 @@ pub fn render_builder(name) -> StringBuilder {
     builder
 }
 
-pub fn render(name) -> String {
-    string_builder.to_string(render_builder(name))
+pub fn render(name name) -> String {
+    string_builder.to_string(render_builder(name: name))
 }
 
