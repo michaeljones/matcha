@@ -6,6 +6,7 @@ import template/two_identifiers
 import template/if_statement
 import template/if_else_statement
 import template/nested_if_statement
+import template/for_loop
 
 pub fn main() {
   gleeunit.main()
@@ -52,4 +53,12 @@ pub fn nested_if_statement_test() {
 
   nested_if_statement.render(is_user: False, is_admin: False)
   |> should.equal("Hello\n")
+}
+
+pub fn for_loop_test() {
+  for_loop.render(["Anna", "Bill", "Christine"])
+  |> should.equal("Hello, to Anna and to Bill and to Christine and everyone else\n")
+
+  for_loop.render([])
+  |> should.equal("Hello, everyone else\n")
 }

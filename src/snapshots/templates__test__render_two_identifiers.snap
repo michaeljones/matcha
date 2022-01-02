@@ -1,10 +1,11 @@
 ---
 source: src/main.rs
-assertion_line: 529
+assertion_line: 601
 expression: "Hello {{ name }}, {{ adjective }} to meet you"
 
 ---
 import gleam/string_builder.{StringBuilder}
+import gleam/list
 
 pub fn render_builder(name name, adjective adjective) -> StringBuilder {
     let builder = string_builder.from_string("")

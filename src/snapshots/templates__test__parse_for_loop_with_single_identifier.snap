@@ -1,0 +1,20 @@
+---
+source: src/main.rs
+assertion_line: 564
+expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
+
+---
+[
+    Text(
+        "Hello ",
+    ),
+    For(
+        "item",
+        "list",
+        [
+            Indentifier(
+                "item",
+            ),
+        ],
+    ),
+]

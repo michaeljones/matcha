@@ -1,0 +1,1 @@
+Hello,{% for item in list %} to {{ item }} and{% endfor %} everyone else

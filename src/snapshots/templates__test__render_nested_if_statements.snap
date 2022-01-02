@@ -1,35 +1,38 @@
 ---
 source: src/main.rs
-assertion_line: 549
+assertion_line: 621
 expression: "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
 
 ---
 import gleam/string_builder.{StringBuilder}
+import gleam/list
 
 pub fn render_builder(is_user is_user, is_admin is_admin) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello ")
-let builder = case is_user {
-    True -> {
-        let builder = case is_admin {
-    True -> {
-            let builder = string_builder.append(builder, "Admin")
+    let builder = case is_user {
+        True -> {
+                let builder = case is_admin {
+        True -> {
+                let builder = string_builder.append(builder, "Admin")
 
-        builder
-    }
-    False -> {
-            let builder = string_builder.append(builder, "User")
+            builder
+        }
+        False -> {
+                let builder = string_builder.append(builder, "User")
 
-        builder
-    }
+            builder
+        }
 }
-        builder
-    }
-    False -> {
-        
-        builder
-    }
+
+            builder
+        }
+        False -> {
+            
+            builder
+        }
 }
+
     builder
 }
 

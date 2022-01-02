@@ -17,6 +17,9 @@ enum Token {
     If,
     Else,
     EndIf,
+    For,
+    EndFor,
+    In,
 }
 
 #[derive(Debug)]
@@ -76,6 +79,23 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
                             let identifier = scan_identifier(iter);
                             tokens.push(Token::Identifier(identifier));
                         }
+                        Token::For => {
+                            eat_white_space(iter);
+
+                            let identifier = scan_identifier(iter);
+                            tokens.push(Token::Identifier(identifier));
+
+                            eat_white_space(iter);
+
+                            let identifier = scan_identifier(iter);
+                            let keyword_token = identifier_to_token(&identifier)?;
+                            tokens.push(keyword_token.clone());
+
+                            eat_white_space(iter);
+
+                            let identifier = scan_identifier(iter);
+                            tokens.push(Token::Identifier(identifier));
+                        }
                         _ => {}
                     }
 
@@ -123,6 +143,9 @@ fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
         "if" => Ok(Token::If),
         "else" => Ok(Token::Else),
         "endif" => Ok(Token::EndIf),
+        "for" => Ok(Token::For),
+        "endfor" => Ok(Token::EndFor),
+        "in" => Ok(Token::In),
         _ => Err(ScanError::UnknownKeyword(identifier.to_string())),
     }
 }
@@ -168,6 +191,7 @@ enum Node {
     Text(String),
     Indentifier(String),
     If(String, Vec<Node>, Vec<Node>),
+    For(String, String, Vec<Node>),
 }
 
 #[derive(Debug)]
@@ -184,6 +208,7 @@ fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
 fn parse_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     match tokens.next() {
         Some(Token::If) => parse_if_statement(tokens),
+        Some(Token::For) => parse_for_statement(tokens),
         Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
         None => {
             return Err(ParserError::UnexpectedEnd);
@@ -206,7 +231,8 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 consume_token(tokens, Token::CloseValue)?;
             }
             Some(Token::OpenStmt) => {
-                if let Some(Token::Else) | Some(Token::EndIf) = tokens.peek() {
+                if let Some(Token::Else) | Some(Token::EndIf) | Some(Token::EndFor) = tokens.peek()
+                {
                     if in_statement {
                         break;
                     } else {
@@ -259,6 +285,21 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     Ok(Node::If(name, if_nodes, else_nodes))
 }
 
+fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
+    let entry_identifier = extract_identifier(tokens)?;
+    consume_token(tokens, Token::In)?;
+
+    let list_identifier = extract_identifier(tokens)?;
+    consume_token(tokens, Token::CloseStmt)?;
+
+    let loop_nodes = parse_inner(tokens, true)?;
+
+    consume_token(tokens, Token::EndFor)?;
+    consume_token(tokens, Token::CloseStmt)?;
+
+    Ok(Node::For(entry_identifier, list_identifier, loop_nodes))
+}
+
 fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
@@ -301,6 +342,7 @@ fn render(iter: &mut NodeIter) -> String {
 
     let output = format!(
         r#"import gleam/string_builder.{{StringBuilder}}
+import gleam/list
 
 pub fn render_builder({}) -> StringBuilder {{
     let builder = string_builder.from_string("")
@@ -344,21 +386,36 @@ fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
                 let (if_lines, mut if_params) = render_lines(&mut if_nodes.iter().peekable());
                 let (else_lines, mut else_params) = render_lines(&mut else_nodes.iter().peekable());
                 builder_lines.push_str(&format!(
-                    r#"let builder = case {} {{
-    True -> {{
-        {}
-        builder
-    }}
-    False -> {{
-        {}
-        builder
-    }}
-}}"#,
+                    r#"    let builder = case {} {{
+        True -> {{
+            {}
+            builder
+        }}
+        False -> {{
+            {}
+            builder
+        }}
+}}
+"#,
                     identifier_name, if_lines, else_lines
                 ));
                 params.push(identifier_name.clone());
                 params.append(&mut if_params);
                 params.append(&mut else_params);
+            }
+            Some(Node::For(entry_identifier, list_identifier, loop_nodes)) => {
+                iter.next();
+                let (loop_lines, mut _loop_params) =
+                    render_lines(&mut loop_nodes.iter().peekable());
+                builder_lines.push_str(&format!(
+                    r#"    let builder = list.fold({}, builder, fn(builder, {}) {{
+        {}
+        builder
+}})
+"#,
+                    list_identifier, entry_identifier, loop_lines
+                ));
+                params.push(list_identifier.clone());
             }
             None => break,
         }
@@ -473,6 +530,11 @@ mod test {
         );
     }
 
+    #[test]
+    fn test_scan_for_loop() {
+        assert_scan!("Hello {% for item in list %}{{ item }}{% endfor %}");
+    }
+
     // Parse
 
     #[test]
@@ -512,6 +574,16 @@ mod test {
         );
     }
 
+    #[test]
+    fn test_parse_for_loop_with_single_identifier() {
+        assert_parse!("Hello {% for item in list %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
+    fn test_parse_for_loop() {
+        assert_parse!("Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else");
+    }
+
     // Render
 
     #[test]
@@ -549,5 +621,10 @@ mod test {
         assert_render!(
             "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
         );
+    }
+
+    #[test]
+    fn test_render_for_loop() {
+        assert_render!("Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else");
     }
 }
