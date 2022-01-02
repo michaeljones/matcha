@@ -1,13 +1,14 @@
 ---
 source: src/main.rs
-assertion_line: 295
+assertion_line: 458
 expression: "Hello name, good to meet you"
 
 ---
 import gleam/string_builder.{StringBuilder}
 
 pub fn render_builder() -> StringBuilder {
-    let builder = string_builder.from_string("Hello name, good to meet you")
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, "Hello name, good to meet you")
 
     builder
 }

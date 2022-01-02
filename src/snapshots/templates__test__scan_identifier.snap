@@ -1,18 +1,18 @@
 ---
 source: src/main.rs
-assertion_line: 122
-expression: output
+assertion_line: 293
+expression: "Hello { name }, good to meet you"
 
 ---
 [
     Text(
         "Hello ",
     ),
-    OpenParen,
-    Reference(
+    OpenValue,
+    Identifier(
         "name",
     ),
-    CloseParen,
+    CloseValue,
     Text(
         ", good to meet you",
     ),
