@@ -2,7 +2,7 @@ use log;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 // From: https://stackoverflow.com/a/47648303/98555
@@ -19,9 +19,15 @@ type Iter<'a> = std::iter::Peekable<GraphemeIndices<'a>>;
 #[derive(Debug, Clone, PartialEq)]
 enum Token {
     Text(String),
+    OpenLine,
+    CloseLine,
     OpenValue,
     CloseValue,
     Identifier(String),
+    Import,
+    ImportDetails(String),
+    With,
+    As,
     OpenStmt,
     CloseStmt,
     If,
@@ -35,6 +41,8 @@ enum Token {
 #[derive(Debug)]
 enum ScanError {
     UnknownKeyword(String),
+    UnexpectedGrapheme(String),
+    UnexpectedEnd,
 }
 
 fn scan(contents: &str) -> Result<Vec<Token>, ScanError> {
@@ -64,10 +72,10 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
                     tokens.push(Token::OpenValue);
                     iter.next();
 
-                    eat_white_space(iter);
+                    eat_spaces(iter);
                     let identifier = scan_identifier(iter);
                     tokens.push(Token::Identifier(identifier));
-                    eat_white_space(iter);
+                    eat_spaces(iter);
                 } else if let Some((_, "%")) = iter.peek() {
                     if !buffer.is_empty() {
                         tokens.push(Token::Text(buffer));
@@ -77,31 +85,29 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
                     tokens.push(Token::OpenStmt);
                     iter.next();
 
-                    eat_white_space(iter);
+                    eat_spaces(iter);
                     let identifier = scan_identifier(iter);
                     let keyword_token = identifier_to_token(&identifier)?;
                     tokens.push(keyword_token.clone());
 
+                    eat_spaces(iter);
+
                     match keyword_token {
                         Token::If => {
-                            eat_white_space(iter);
-
                             let identifier = scan_identifier(iter);
                             tokens.push(Token::Identifier(identifier));
                         }
                         Token::For => {
-                            eat_white_space(iter);
-
                             let identifier = scan_identifier(iter);
                             tokens.push(Token::Identifier(identifier));
 
-                            eat_white_space(iter);
+                            eat_spaces(iter);
 
                             let identifier = scan_identifier(iter);
                             let keyword_token = identifier_to_token(&identifier)?;
                             tokens.push(keyword_token.clone());
 
-                            eat_white_space(iter);
+                            eat_spaces(iter);
 
                             let identifier = scan_identifier(iter);
                             tokens.push(Token::Identifier(identifier));
@@ -109,7 +115,44 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
                         _ => {}
                     }
 
-                    eat_white_space(iter);
+                    eat_spaces(iter);
+                } else if let Some((_, ">")) = iter.peek() {
+                    tokens.push(Token::OpenLine);
+                    iter.next();
+
+                    eat_spaces(iter);
+
+                    let identifier = scan_identifier(iter);
+                    let keyword_token = identifier_to_token(&identifier)?;
+                    tokens.push(keyword_token.clone());
+
+                    eat_spaces(iter);
+
+                    match keyword_token {
+                        Token::Import => {
+                            let import_details = scan_import_details(iter);
+                            tokens.push(Token::ImportDetails(import_details));
+                        }
+                        Token::With => {
+                            let identifier = scan_identifier(iter);
+                            tokens.push(Token::Identifier(identifier));
+
+                            eat_spaces(iter);
+
+                            let identifier = scan_identifier(iter);
+                            let keyword_token = identifier_to_token(&identifier)?;
+                            tokens.push(keyword_token.clone());
+
+                            eat_spaces(iter);
+
+                            let identifier = scan_identifier(iter);
+                            tokens.push(Token::Identifier(identifier));
+                        }
+                        _ => {}
+                    }
+
+                    consume_grapheme(iter, "\n")?;
+                    tokens.push(Token::CloseLine);
                 } else {
                     buffer.push('{');
                 }
@@ -149,6 +192,7 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
 }
 
 fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
+    log::trace!("identifier_to_token: {}", identifier);
     match identifier {
         "if" => Ok(Token::If),
         "else" => Ok(Token::Else),
@@ -156,16 +200,21 @@ fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
         "for" => Ok(Token::For),
         "endfor" => Ok(Token::EndFor),
         "in" => Ok(Token::In),
+        "import" => Ok(Token::Import),
+        "with" => Ok(Token::With),
+        "as" => Ok(Token::As),
         _ => Err(ScanError::UnknownKeyword(identifier.to_string())),
     }
 }
 
 fn scan_identifier(iter: &mut Iter) -> String {
+    log::trace!("scan_identifier");
     let mut name = String::new();
 
     loop {
         match iter.peek() {
-            Some((_index, "}")) | Some((_index, " ")) | Some((_index, "%")) => {
+            Some((_index, "}")) | Some((_index, " ")) | Some((_index, "\n"))
+            | Some((_index, "%")) => {
                 break;
             }
             Some((_index, grapheme)) => {
@@ -178,10 +227,42 @@ fn scan_identifier(iter: &mut Iter) -> String {
         }
     }
 
-    name
+    name.trim().to_string()
 }
 
-fn eat_white_space(iter: &mut Iter) {
+fn scan_import_details(iter: &mut Iter) -> String {
+    let mut details = String::new();
+
+    loop {
+        match iter.peek() {
+            Some((_index, "\n")) => {
+                break;
+            }
+            Some((_index, grapheme)) => {
+                details.push_str(grapheme);
+                iter.next();
+            }
+            None => {
+                break;
+            }
+        }
+    }
+
+    details
+}
+
+fn consume_grapheme(iter: &mut Iter, expected: &str) -> Result<(), ScanError> {
+    log::trace!("consume_grapheme");
+    match iter.next() {
+        Some((_, grapheme)) if grapheme == expected => Ok(()),
+        entry => Err(entry
+            .map(|(_, value)| ScanError::UnexpectedGrapheme(value.to_string()))
+            .unwrap_or(ScanError::UnexpectedEnd)),
+    }
+}
+
+fn eat_spaces(iter: &mut Iter) {
+    log::trace!("eat_spaces");
     loop {
         match iter.peek() {
             Some((_index, " ")) => {
@@ -202,6 +283,8 @@ enum Node {
     Identifier(String),
     If(String, Vec<Node>, Vec<Node>),
     For(String, String, Vec<Node>),
+    Import(String),
+    With(String, String),
 }
 
 #[derive(Debug)]
@@ -254,6 +337,22 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 }
                 let node = parse_statement(tokens)?;
                 ast.push(node);
+            }
+            Some(Token::OpenLine) => {
+                match tokens.next() {
+                    Some(Token::Import) => {
+                        let import_details = extract_import_details(tokens)?;
+                        ast.push(Node::Import(import_details))
+                    }
+                    Some(Token::With) => {
+                        let identifier = extract_identifier(tokens)?;
+                        consume_token(tokens, Token::As)?;
+                        let type_ = extract_identifier(tokens)?;
+                        ast.push(Node::With(identifier, type_))
+                    }
+                    _ => {}
+                }
+                consume_token(tokens, Token::CloseLine)?;
             }
             Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
             None => {
@@ -319,6 +418,15 @@ fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
     }
 }
 
+fn extract_import_details(tokens: &mut TokenIter) -> Result<String, ParserError> {
+    log::trace!("extract_import_details");
+    match tokens.next() {
+        Some(Token::ImportDetails(details)) => Ok(details.clone()),
+        Some(token) => Err(ParserError::UnexpectedToken(token.clone())),
+        None => Err(ParserError::UnexpectedEnd),
+    }
+}
+
 fn consume_token(tokens: &mut TokenIter, token: Token) -> Result<(), ParserError> {
     log::trace!("consume_token");
     let next_token = tokens.next();
@@ -336,13 +444,31 @@ fn consume_token(tokens: &mut TokenIter, token: Token) -> Result<(), ParserError
 type NodeIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Node>>;
 
 fn render(iter: &mut NodeIter) -> String {
-    let (builder_lines, mut params) = render_lines(iter);
+    let (builder_lines, params, imports, type_lookup) = render_lines(iter);
+
+    let import_lines = imports
+        .iter()
+        .map(|details| format!("import {}", details))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let mut params = params
+        .iter()
+        .flat_map(|value| value.split(".").next())
+        .collect::<Vec<_>>();
 
     dedup(&mut params);
 
     let params_string = params
         .iter()
-        .map(|value| format!("{} {}", value, value))
+        .map(|value| match type_lookup.get(*value) {
+            Some(type_) => {
+                format!("{} {}: {}", value, value, type_)
+            }
+            None => {
+                format!("{} {}", value, value)
+            }
+        })
         .collect::<Vec<_>>()
         .join(", ");
 
@@ -356,6 +482,8 @@ fn render(iter: &mut NodeIter) -> String {
         r#"import gleam/string_builder.{{StringBuilder}}
 import gleam/list
 
+{}
+
 pub fn render_builder({}) -> StringBuilder {{
     let builder = string_builder.from_string("")
 {}
@@ -366,15 +494,19 @@ pub fn render({}) -> String {{
     string_builder.to_string(render_builder({}))
 }}
 "#,
-        params_string, builder_lines, params_string, args_string
+        import_lines, params_string, builder_lines, params_string, args_string
     );
 
     output
 }
 
-fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
+fn render_lines(
+    iter: &mut NodeIter,
+) -> (String, Vec<String>, Vec<String>, HashMap<String, String>) {
     let mut builder_lines = String::new();
     let mut params = vec![];
+    let mut imports = vec![];
+    let mut type_lookup = HashMap::new();
 
     loop {
         match iter.peek() {
@@ -393,10 +525,19 @@ fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
                 ));
                 params.push(name.clone());
             }
+            Some(Node::Import(import_details)) => {
+                iter.next();
+                imports.push(import_details.clone());
+            }
+            Some(Node::With(identifier, type_)) => {
+                iter.next();
+                type_lookup.insert(identifier.clone(), type_.clone());
+            }
             Some(Node::If(identifier_name, if_nodes, else_nodes)) => {
                 iter.next();
-                let (if_lines, mut if_params) = render_lines(&mut if_nodes.iter().peekable());
-                let (else_lines, mut else_params) = render_lines(&mut else_nodes.iter().peekable());
+                let (if_lines, mut if_params, _, _) = render_lines(&mut if_nodes.iter().peekable());
+                let (else_lines, mut else_params, _, _) =
+                    render_lines(&mut else_nodes.iter().peekable());
                 builder_lines.push_str(&format!(
                     r#"    let builder = case {} {{
         True -> {{
@@ -417,7 +558,7 @@ fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
             }
             Some(Node::For(entry_identifier, list_identifier, loop_nodes)) => {
                 iter.next();
-                let (loop_lines, mut _loop_params) =
+                let (loop_lines, mut _loop_params, _, _) =
                     render_lines(&mut loop_nodes.iter().peekable());
                 builder_lines.push_str(&format!(
                     r#"    let builder = list.fold({}, builder, fn(builder, {}) {{
@@ -433,7 +574,7 @@ fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
         }
     }
 
-    (builder_lines, params)
+    (builder_lines, params, imports, type_lookup)
 }
 
 fn convert(filepath: &std::path::PathBuf) {
@@ -547,6 +688,21 @@ mod test {
         assert_scan!("Hello {% for item in list %}{{ item }}{% endfor %}");
     }
 
+    #[test]
+    fn test_scan_dot_access() {
+        assert_scan!("Hello{% if user.is_admin %} Admin{% endif %}");
+    }
+
+    #[test]
+    fn test_scan_import() {
+        assert_scan!("{> import user.{User}\n{{ name }}");
+    }
+
+    #[test]
+    fn test_scan_with() {
+        assert_scan!("{> with user as User\n{{ user }}");
+    }
+
     // Parse
 
     #[test]
@@ -596,6 +752,21 @@ mod test {
         assert_parse!("Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else");
     }
 
+    #[test]
+    fn test_parse_dot_access() {
+        assert_parse!("Hello{% if user.is_admin %} Admin{% endif %}");
+    }
+
+    #[test]
+    fn test_parse_import() {
+        assert_parse!("{> import user.{User}\n{{ name }}");
+    }
+
+    #[test]
+    fn test_parse_with() {
+        assert_parse!("{> with user as User\n{{ user }}");
+    }
+
     // Render
 
     #[test]
@@ -643,5 +814,25 @@ mod test {
     #[test]
     fn test_render_for_loop() {
         assert_render!("Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else");
+    }
+
+    #[test]
+    fn test_render_dot_access() {
+        assert_render!("Hello{% if user.is_admin %} Admin{% endif %}");
+    }
+
+    #[test]
+    fn test_render_import() {
+        assert_render!("{> import user.{User}\n{{ name }}");
+    }
+
+    #[test]
+    fn test_render_with() {
+        assert_render!("{> with user as User\n{{ user }}");
+    }
+
+    #[test]
+    fn test_render_import_and_with() {
+        assert_render!("{> import user.{User}\n{> with user as User\n{{ user }}");
     }
 }

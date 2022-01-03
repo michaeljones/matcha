@@ -1,0 +1,19 @@
+---
+source: src/main.rs
+assertion_line: 698
+expression: "{> import user.{User}\n{{ name }}"
+
+---
+[
+    OpenLine,
+    Import,
+    ImportDetails(
+        "user.{User}",
+    ),
+    CloseLine,
+    OpenValue,
+    Identifier(
+        "name",
+    ),
+    CloseValue,
+]

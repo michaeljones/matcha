@@ -1,0 +1,33 @@
+---
+source: src/main.rs
+assertion_line: 761
+expression: "Hello{% if user.is_admin %} Admin{% endif %}"
+
+---
+import gleam/string_builder.{StringBuilder}
+import gleam/list
+
+
+
+pub fn render_builder(user user) -> StringBuilder {
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, "Hello")
+    let builder = case user.is_admin {
+        True -> {
+                let builder = string_builder.append(builder, " Admin")
+
+            builder
+        }
+        False -> {
+            
+            builder
+        }
+}
+
+    builder
+}
+
+pub fn render(user user) -> String {
+    string_builder.to_string(render_builder(user: user))
+}
+
