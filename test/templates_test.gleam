@@ -3,6 +3,7 @@ import gleeunit/should
 
 import template/identifier
 import template/two_identifiers
+import template/double_identifier_usage
 import template/if_statement
 import template/if_else_statement
 import template/nested_if_statement
@@ -26,6 +27,11 @@ pub fn two_identifiers_test() {
 
   two_identifiers.render("User", "nice")
   |> should.equal("Hello User, nice to meet you\n")
+}
+
+pub fn double_identifier_usage_test() {
+  double_identifier_usage.render("Double")
+  |> should.equal("Double usage, Double usage\n")
 }
 
 pub fn if_statement_test() {

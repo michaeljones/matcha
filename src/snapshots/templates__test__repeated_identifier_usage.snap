@@ -1,0 +1,23 @@
+---
+source: src/main.rs
+assertion_line: 618
+expression: "{{ name }} usage, {{ name }} usage"
+
+---
+import gleam/string_builder.{StringBuilder}
+import gleam/list
+
+pub fn render_builder(name name) -> StringBuilder {
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, name)
+    let builder = string_builder.append(builder, " usage, ")
+    let builder = string_builder.append(builder, name)
+    let builder = string_builder.append(builder, " usage")
+
+    builder
+}
+
+pub fn render(name name) -> String {
+    string_builder.to_string(render_builder(name: name))
+}
+

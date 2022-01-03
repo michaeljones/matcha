@@ -2,6 +2,16 @@ use log;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
 
+use std::collections::HashSet;
+use std::hash::Hash;
+
+// From: https://stackoverflow.com/a/47648303/98555
+fn dedup<T: Eq + Hash + Clone>(v: &mut Vec<T>) {
+    // note the Copy constraint
+    let mut uniques = HashSet::new();
+    v.retain(|e| uniques.insert(e.clone()));
+}
+
 // Scanning
 
 type Iter<'a> = std::iter::Peekable<GraphemeIndices<'a>>;
@@ -326,7 +336,9 @@ fn consume_token(tokens: &mut TokenIter, token: Token) -> Result<(), ParserError
 type NodeIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Node>>;
 
 fn render(iter: &mut NodeIter) -> String {
-    let (builder_lines, params) = render_lines(iter);
+    let (builder_lines, mut params) = render_lines(iter);
+
+    dedup(&mut params);
 
     let params_string = params
         .iter()
@@ -599,6 +611,11 @@ mod test {
     #[test]
     fn test_render_two_identifiers() {
         assert_render!("Hello {{ name }}, {{ adjective }} to meet you");
+    }
+
+    #[test]
+    fn test_repeated_identifier_usage() {
+        assert_render!("{{ name }} usage, {{ name }} usage");
     }
 
     #[test]
