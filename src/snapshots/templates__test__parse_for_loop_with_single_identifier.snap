@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 564
+assertion_line: 681
 expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
 
 ---
@@ -12,7 +12,7 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         "item",
         "list",
         [
-            Indentifier(
+            Identifier(
                 "item",
             ),
         ],

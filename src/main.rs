@@ -199,7 +199,7 @@ type TokenIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Token>>;
 #[derive(Debug)]
 enum Node {
     Text(String),
-    Indentifier(String),
+    Identifier(String),
     If(String, Vec<Node>, Vec<Node>),
     For(String, String, Vec<Node>),
 }
@@ -237,7 +237,7 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
             }
             Some(Token::OpenValue) => {
                 let name = extract_identifier(tokens)?;
-                ast.push(Node::Indentifier(name.clone()));
+                ast.push(Node::Identifier(name.clone()));
                 consume_token(tokens, Token::CloseValue)?;
             }
             Some(Token::OpenStmt) => {
@@ -385,7 +385,7 @@ fn render_lines(iter: &mut NodeIter) -> (String, Vec<String>) {
                     text
                 ));
             }
-            Some(Node::Indentifier(name)) => {
+            Some(Node::Identifier(name)) => {
                 iter.next();
                 builder_lines.push_str(&format!(
                     "    let builder = string_builder.append(builder, {})\n",
