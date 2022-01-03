@@ -8,6 +8,9 @@ import template/if_statement
 import template/if_else_statement
 import template/nested_if_statement
 import template/for_loop
+import template/dot_access
+
+import my_user.{User}
 
 pub fn main() {
   gleeunit.main()
@@ -67,4 +70,14 @@ pub fn for_loop_test() {
 
   for_loop.render([])
   |> should.equal("Hello, everyone else\n")
+}
+
+pub fn dot_access_test() {
+  let user = User(is_admin: True)
+  dot_access.render(user)
+  |> should.equal("Hello Admin\n")
+
+  let user = User(is_admin: False)
+  dot_access.render(user)
+  |> should.equal("Hello\n")
 }

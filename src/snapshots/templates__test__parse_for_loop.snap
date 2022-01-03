@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 569
+assertion_line: 686
 expression: "Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
 
 ---
@@ -15,7 +15,7 @@ expression: "Hello,{% for item in list %} to {{ item }} and {% endfor %} everyon
             Text(
                 " to ",
             ),
-            Indentifier(
+            Identifier(
                 "item",
             ),
             Text(

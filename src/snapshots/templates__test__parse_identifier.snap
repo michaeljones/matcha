@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 446
+assertion_line: 654
 expression: "Hello {{ name }}, good to meet you"
 
 ---
@@ -8,7 +8,7 @@ expression: "Hello {{ name }}, good to meet you"
     Text(
         "Hello ",
     ),
-    Indentifier(
+    Identifier(
         "name",
     ),
     Text(

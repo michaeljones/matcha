@@ -1,0 +1,3 @@
+{> import my_user.{User}
+{> with user_obj as User
+Hello{% if user_obj.is_admin %} Admin{% endif %}
