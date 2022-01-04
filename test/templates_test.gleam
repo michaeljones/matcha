@@ -9,6 +9,7 @@ import template/if_else_statement
 import template/nested_if_statement
 import template/for_loop
 import template/dot_access
+import template/multiline
 
 import my_user.{User}
 
@@ -80,4 +81,19 @@ pub fn dot_access_test() {
   let user = User(is_admin: False)
   dot_access.render(user)
   |> should.equal("Hello\n")
+}
+
+pub fn multiline_test() {
+  multiline.render(["Anna", "Bill", "Christine"])
+  |> should.equal("<h1>My List</h1>
+<ul>
+
+    <li>Anna</li>
+
+    <li>Bill</li>
+
+    <li>Christine</li>
+
+</ul>
+")
 }

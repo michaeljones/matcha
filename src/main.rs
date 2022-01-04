@@ -835,4 +835,15 @@ mod test {
     fn test_render_import_and_with() {
         assert_render!("{> import user.{User}\n{> with user as User\n{{ user }}");
     }
+
+    #[test]
+    fn test_render_multiline() {
+        assert_render!(
+            r#"<ul>
+{% for entry in my_list %}
+    <li>{{ entry }}</li>
+{% endfor %}
+</ul>"#
+        );
+    }
 }
