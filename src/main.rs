@@ -514,7 +514,7 @@ fn render_lines(
                 iter.next();
                 builder_lines.push_str(&format!(
                     "    let builder = string_builder.append(builder, \"{}\")\n",
-                    text
+                    text.replace("\"", "\\\"")
                 ));
             }
             Some(Node::Identifier(name)) => {
@@ -849,5 +849,10 @@ mod test {
 {% endfor %}
 </ul>"#
         );
+    }
+
+    #[test]
+    fn test_render_quotes() {
+        assert_render!(r#"<div class="my-class">{{ name }}</div>"#);
     }
 }

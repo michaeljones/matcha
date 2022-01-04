@@ -12,6 +12,7 @@ import template/dot_access
 import template/multiline
 import template/value_in_for_loop
 import template/value_in_if_else
+import template/quote
 
 import my_user.{User}
 
@@ -121,4 +122,9 @@ pub fn multiline_test() {
 
 </ul>
 ")
+}
+
+pub fn quote_test() {
+  quote.render(name: "Anna")
+  |> should.equal("<div class=\"my-class\">Anna</div>\n")
 }
