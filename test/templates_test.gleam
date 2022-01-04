@@ -11,6 +11,7 @@ import template/for_loop
 import template/dot_access
 import template/multiline
 import template/value_in_for_loop
+import template/value_in_if_else
 
 import my_user.{User}
 
@@ -52,6 +53,14 @@ pub fn if_else_statement_test() {
   |> should.equal("Hello User\n")
 
   if_else_statement.render(False)
+  |> should.equal("Hello Unknown\n")
+}
+
+pub fn value_in_if_else_test() {
+  value_in_if_else.render(greeting: "Hello", is_user: True)
+  |> should.equal("Hello User\n")
+
+  value_in_if_else.render(greeting: "Hello", is_user: False)
   |> should.equal("Hello Unknown\n")
 }
 
