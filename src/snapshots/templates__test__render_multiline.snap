@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 841
-expression: "<ul>\n{% for entry in list %}\n    <li>{{ entry }}</li>\n{% endfor %}\n</ul>"
+assertion_line: 845
+expression: "<ul>\n{% for entry in my_list %}\n    <li>{{ entry }}</li>\n{% endfor %}\n</ul>"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -9,11 +9,11 @@ import gleam/list
 
 
 
-pub fn render_builder(list list) -> StringBuilder {
+pub fn render_builder(my_list my_list) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "<ul>
 ")
-    let builder = list.fold(list, builder, fn(builder, entry) {
+    let builder = list.fold(my_list, builder, fn(builder, entry) {
             let builder = string_builder.append(builder, "
     <li>")
     let builder = string_builder.append(builder, entry)
@@ -28,7 +28,7 @@ pub fn render_builder(list list) -> StringBuilder {
     builder
 }
 
-pub fn render(list list) -> String {
-    string_builder.to_string(render_builder(list: list))
+pub fn render(my_list my_list) -> String {
+    string_builder.to_string(render_builder(my_list: my_list))
 }
 
