@@ -558,7 +558,7 @@ fn render_lines(
             }
             Some(Node::For(entry_identifier, list_identifier, loop_nodes)) => {
                 iter.next();
-                let (loop_lines, mut _loop_params, _, _) =
+                let (loop_lines, mut loop_params, _, _) =
                     render_lines(&mut loop_nodes.iter().peekable());
                 builder_lines.push_str(&format!(
                     r#"    let builder = list.fold({}, builder, fn(builder, {}) {{
@@ -569,6 +569,10 @@ fn render_lines(
                     list_identifier, entry_identifier, loop_lines
                 ));
                 params.push(list_identifier.clone());
+
+                // Remove the for-loop identifier which will have been detected as a 'param'
+                loop_params.retain(|value| value != entry_identifier);
+                params.append(&mut loop_params);
             }
             None => break,
         }

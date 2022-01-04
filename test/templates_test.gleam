@@ -10,6 +10,7 @@ import template/nested_if_statement
 import template/for_loop
 import template/dot_access
 import template/multiline
+import template/value_in_for_loop
 
 import my_user.{User}
 
@@ -71,6 +72,21 @@ pub fn for_loop_test() {
 
   for_loop.render([])
   |> should.equal("Hello, everyone else\n")
+}
+
+pub fn value_in_for_loop_test() {
+  value_in_for_loop.render(greeting: "Hello", my_list: ["Anna", "Bill", "Christine"])
+  |> should.equal("<h1>My List</h1>
+<ul>
+
+    <li>Hello Anna</li>
+
+    <li>Hello Bill</li>
+
+    <li>Hello Christine</li>
+
+</ul>
+")
 }
 
 pub fn dot_access_test() {
