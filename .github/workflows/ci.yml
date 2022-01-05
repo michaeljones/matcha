@@ -46,13 +46,13 @@ jobs:
     - name: Handle Rust dependencies caching
       uses: Swatinem/rust-cache@v1
       with:
-        key: ${{ matrix.target }}
+        key: v2${{ matrix.target }}
 
     - name: Run tests
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --workspace --target ${{ matrix.target }}
+        args: --workspace
 
   test-gleam:
     runs-on: ${{ matrix.os }}
@@ -94,13 +94,12 @@ jobs:
     - name: Handle Rust dependencies caching
       uses: Swatinem/rust-cache@v1
       with:
-        key: ${{ matrix.target }}
+        key: v2${{ matrix.target }}
 
     - name: Run
       uses: actions-rs/cargo@v1
       with:
         command: run
-        args: --target ${{ matrix.target }}
 
     - name: Run gleam tests
       run: gleam test
@@ -109,4 +108,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: templates-${{ matrix.target }}
-        path: target/${{ matrix.target }}/debug/templates
+        path: target/debug/templates
