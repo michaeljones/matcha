@@ -1,0 +1,111 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        toolchain: [stable]
+        build: [linux-amd64]
+#         build: [linux-amd64, macos, windows]
+        include:
+          - build: linux-amd64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+#           - build: macos
+#             os: macos-latest
+#             target: x86_64-apple-darwin
+#           - build: windows
+#             os: windows-latest
+#             target: x86_64-pc-windows-msvc
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        target: ${{ matrix.target }}
+        profile: minimal
+        override: true
+        default: true
+
+    - name: Handle Rust dependencies caching
+      uses: Swatinem/rust-cache@v1
+      with:
+        key: v2${{ matrix.target }}
+
+    - name: Run tests
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --workspace
+
+  test-gleam:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        toolchain: [stable]
+        build: [linux-amd64]
+#         build: [linux-amd64, macos, windows]
+        include:
+          - build: linux-amd64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+#           - build: macos
+#             os: macos-latest
+#             target: x86_64-apple-darwin
+#           - build: windows
+#             os: windows-latest
+#             target: x86_64-pc-windows-msvc
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Install OTP and Gleam
+      uses: erlef/setup-beam@v1.9.0
+      with:
+        otp-version: 23.2
+        gleam-version: 0.19.0-rc1
+        
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        target: ${{ matrix.target }}
+        profile: minimal
+        override: true
+        default: true
+
+    - name: Handle Rust dependencies caching
+      uses: Swatinem/rust-cache@v1
+      with:
+        key: v2${{ matrix.target }}
+
+    - name: Run
+      uses: actions-rs/cargo@v1
+      with:
+        command: run
+
+    - name: Run gleam tests
+      run: gleam test
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: templates-${{ matrix.target }}
+        path: target/debug/templates
