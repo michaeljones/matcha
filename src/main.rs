@@ -1,4 +1,3 @@
-use log;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
 
@@ -263,13 +262,8 @@ fn consume_grapheme(iter: &mut Iter, expected: &str) -> Result<(), ScanError> {
 
 fn eat_spaces(iter: &mut Iter) {
     log::trace!("eat_spaces");
-    loop {
-        match iter.peek() {
-            Some((_index, " ")) => {
-                iter.next();
-            }
-            _ => break,
-        }
+    while let Some((_index, " ")) = iter.peek() {
+        iter.next();
     }
 }
 
@@ -302,10 +296,8 @@ fn parse_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     match tokens.next() {
         Some(Token::If) => parse_if_statement(tokens),
         Some(Token::For) => parse_for_statement(tokens),
-        Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
-        None => {
-            return Err(ParserError::UnexpectedEnd);
-        }
+        Some(token) => Err(ParserError::UnexpectedToken(token.clone())),
+        None => Err(ParserError::UnexpectedEnd),
     }
 }
 
@@ -454,7 +446,7 @@ fn render(iter: &mut NodeIter) -> String {
 
     let mut params = params
         .iter()
-        .flat_map(|value| value.split(".").next())
+        .flat_map(|value| value.split('.').next())
         .collect::<Vec<_>>();
 
     dedup(&mut params);
@@ -581,13 +573,12 @@ fn render_lines(
     (builder_lines, params, imports, type_lookup)
 }
 
-fn convert(filepath: &std::path::PathBuf) {
+fn convert(filepath: &std::path::Path) {
     let contents = std::fs::read_to_string(filepath).expect("Unable to read file");
     let tokens = scan(&contents).expect("Unable to scan");
     let ast = parse(&mut tokens.iter().peekable()).expect("Unable to parse file");
     let output = render(&mut ast.iter().peekable());
-    let mut out_file_path = filepath.clone();
-    out_file_path.set_extension("gleam");
+    let out_file_path = filepath.with_extension("gleam");
     std::fs::write(out_file_path, output).expect("Unable to write file");
 }
 
