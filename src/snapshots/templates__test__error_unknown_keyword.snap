@@ -1,10 +1,10 @@
 ---
 source: src/main.rs
-assertion_line: 1064
+assertion_line: 1089
 expression: "Hello {% wrong %}"
 
 ---
-Unknown keyword: wrong
+Unexpected identifier: wrong
 
 error: 
   ┌─ -test-:1:10
