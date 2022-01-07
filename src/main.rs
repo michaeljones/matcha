@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use codespan_reporting::diagnostic::{Diagnostic, Label};
@@ -781,13 +782,27 @@ fn main() {
 mod test {
     use super::*;
 
+    fn debug_format_result<T: Debug, E: Debug>(result: Result<T, E>) -> String {
+        match result {
+            Ok(value) => format!("{:#?}", value),
+            Err(err) => format!("{:#?}", err),
+        }
+    }
+
+    fn format_result(result: Result<String, Error>) -> String {
+        match result {
+            Ok(value) => value,
+            Err(err) => error_to_string(err),
+        }
+    }
+
     #[macro_export]
     macro_rules! assert_scan {
         ($text:expr $(,)?) => {{
             let _ = env_logger::try_init();
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                format!("{:#?}", scan($text).expect("Scan failed")),
+                debug_format_result(scan($text)),
                 $text
             );
         }};
@@ -797,13 +812,19 @@ mod test {
     macro_rules! assert_parse {
         ($text:expr $(,)?) => {{
             let _ = env_logger::try_init();
-            let tokens = scan($text).expect("Scan failed");
+            let source = Source {
+                filename: "-test-".to_string(),
+                contents: $text.to_string(),
+            };
+            let result = scan($text)
+                .map_err(|err| Error::Scan(err, source.clone()))
+                .and_then(|tokens| {
+                    parse(&mut tokens.iter().peekable())
+                        .map_err(|err| Error::Parse(err, source.clone()))
+                });
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                format!(
-                    "{:#?}",
-                    parse(&mut tokens.iter().peekable()).expect("Parse failed")
-                ),
+                debug_format_result(result),
                 $text
             );
         }};
@@ -813,13 +834,18 @@ mod test {
     macro_rules! assert_render {
         ($text:expr $(,)?) => {{
             let _ = env_logger::try_init();
-            let tokens = scan($text).expect("Scan failed");
-            let ast = parse(&mut tokens.iter().peekable()).expect("Parse failed");
-            insta::assert_snapshot!(
-                insta::internals::AutoName,
-                render(&mut ast.iter().peekable()),
-                $text
-            );
+            let source = Source {
+                filename: "-test-".to_string(),
+                contents: $text.to_string(),
+            };
+            let result = scan($text)
+                .map_err(|err| Error::Scan(err, source.clone()))
+                .and_then(|tokens| {
+                    parse(&mut tokens.iter().peekable())
+                        .map_err(|err| Error::Parse(err, source.clone()))
+                })
+                .map(|ast| render(&mut ast.iter().peekable()));
+            insta::assert_snapshot!(insta::internals::AutoName, format_result(result), $text);
         }};
     }
 
@@ -1029,5 +1055,12 @@ mod test {
     #[test]
     fn test_render_quotes() {
         assert_render!(r#"<div class="my-class">{{ name }}</div>"#);
+    }
+
+    // Errors
+
+    #[test]
+    fn test_error_unknown_keyword() {
+        assert_render!(r#"Hello {% wrong %}"#);
     }
 }
