@@ -51,9 +51,34 @@ enum Token {
     In,
 }
 
+impl std::fmt::Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Token::Text(string) => string,
+            Token::OpenLine => "{>",
+            Token::CloseLine => "\n",
+            Token::OpenValue => "{{",
+            Token::CloseValue => "}}",
+            Token::OpenStmt => "{%",
+            Token::CloseStmt => "%}",
+            Token::Identifier(name) => name,
+            Token::Import => "import",
+            Token::ImportDetails(_) => "import-details",
+            Token::With => "with",
+            Token::As => "as",
+            Token::If => "if",
+            Token::Else => "else",
+            Token::EndIf => "endif",
+            Token::For => "for",
+            Token::EndFor => "endfor",
+            Token::In => "in",
+        };
+        write!(f, "{}", str)
+    }
+}
+
 #[derive(Debug)]
 enum ScanError {
-    UnknownKeyword(String, Range),
     UnexpectedGrapheme(String, Position),
     UnexpectedEnd,
 }
@@ -63,14 +88,13 @@ type Tokens = Vec<(Token, Range)>;
 fn scan(contents: &str) -> Result<Tokens, ScanError> {
     log::trace!("scan");
     let iter = contents.grapheme_indices(true);
-    let mut tokens = vec![];
 
-    scan_plain(&mut iter.peekable(), &mut tokens)?;
+    let tokens = scan_plain(&mut iter.peekable(), vec![])?;
 
     Ok(tokens)
 }
 
-fn scan_plain(iter: &mut Iter, tokens: &mut Tokens) -> Result<(), ScanError> {
+fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> {
     log::trace!("scan_plain");
     let mut buffer = String::new();
     let mut buffer_start_index = None;
@@ -99,10 +123,7 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Tokens) -> Result<(), ScanError> {
                     ));
                     iter.next();
 
-                    eat_spaces(iter);
-                    let (identifier, range) = scan_identifier(iter);
-                    tokens.push((Token::Identifier(identifier), range));
-                    eat_spaces(iter);
+                    tokens = scan_identifiers(iter, tokens)?;
                 } else if let Some((second_index, "%")) = iter.peek() {
                     if !buffer.is_empty() {
                         tokens.push((
@@ -124,37 +145,7 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Tokens) -> Result<(), ScanError> {
                     ));
                     iter.next();
 
-                    eat_spaces(iter);
-                    let (identifier, range) = scan_identifier(iter);
-                    let keyword_token = identifier_to_token(&identifier, &range)?;
-                    tokens.push((keyword_token.clone(), range));
-
-                    eat_spaces(iter);
-
-                    match keyword_token {
-                        Token::If => {
-                            let (identifier, range) = scan_identifier(iter);
-                            tokens.push((Token::Identifier(identifier), range));
-                        }
-                        Token::For => {
-                            let (identifier, range) = scan_identifier(iter);
-                            tokens.push((Token::Identifier(identifier), range));
-
-                            eat_spaces(iter);
-
-                            let (identifier, range) = scan_identifier(iter);
-                            let keyword_token = identifier_to_token(&identifier, &range)?;
-                            tokens.push((keyword_token.clone(), range));
-
-                            eat_spaces(iter);
-
-                            let (identifier, range) = scan_identifier(iter);
-                            tokens.push((Token::Identifier(identifier), range));
-                        }
-                        _ => {}
-                    }
-
-                    eat_spaces(iter);
+                    tokens = scan_identifiers(iter, tokens)?;
                 } else if let Some((second_index, ">")) = iter.peek() {
                     tokens.push((
                         Token::OpenLine,
@@ -165,38 +156,7 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Tokens) -> Result<(), ScanError> {
                     ));
                     iter.next();
 
-                    eat_spaces(iter);
-
-                    let (identifier, range) = scan_identifier(iter);
-                    let keyword_token = identifier_to_token(&identifier, &range)?;
-                    tokens.push((keyword_token.clone(), range));
-
-                    eat_spaces(iter);
-
-                    match keyword_token {
-                        Token::Import => {
-                            let (import_details, range) = scan_import_details(iter);
-                            tokens.push((Token::ImportDetails(import_details), range));
-                        }
-                        Token::With => {
-                            let (identifier, range) = scan_identifier(iter);
-                            tokens.push((Token::Identifier(identifier), range));
-
-                            eat_spaces(iter);
-
-                            let (identifier, range) = scan_identifier(iter);
-                            let keyword_token = identifier_to_token(&identifier, &range)?;
-                            tokens.push((keyword_token.clone(), range));
-
-                            eat_spaces(iter);
-
-                            let (identifier, range) = scan_identifier(iter);
-                            tokens.push((Token::Identifier(identifier), range));
-
-                            eat_spaces(iter);
-                        }
-                        _ => {}
-                    }
+                    tokens = scan_line(iter, tokens)?;
 
                     let range = consume_grapheme(iter, "\n")?;
                     tokens.push((Token::CloseLine, range));
@@ -249,33 +209,34 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Tokens) -> Result<(), ScanError> {
                         },
                     ));
                 }
-                return Ok(());
+                return Ok(tokens);
             }
         }
     }
 }
 
-fn identifier_to_token(identifier: &str, range: &Range) -> Result<Token, ScanError> {
-    log::trace!("identifier_to_token: {}", identifier);
-    match identifier {
-        "if" => Ok(Token::If),
-        "else" => Ok(Token::Else),
-        "endif" => Ok(Token::EndIf),
-        "for" => Ok(Token::For),
-        "endfor" => Ok(Token::EndFor),
-        "in" => Ok(Token::In),
-        "import" => Ok(Token::Import),
-        "with" => Ok(Token::With),
-        "as" => Ok(Token::As),
-        _ => Err(ScanError::UnknownKeyword(
-            identifier.to_string(),
-            range.clone(),
-        )),
+fn scan_identifiers(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> {
+    log::trace!("scan_identifiers");
+    loop {
+        match iter.peek() {
+            Some((_index, "}")) | Some((_index, "%")) | Some((_index, "\n")) => {
+                break;
+            }
+            None => break,
+            Some(_) => {
+                eat_spaces(iter);
+                let (identifier_or_keyword, range) = scan_identifier_or_keyword(iter);
+                tokens.push((identifier_or_keyword, range));
+                eat_spaces(iter);
+            }
+        }
     }
+
+    Ok(tokens)
 }
 
-fn scan_identifier(iter: &mut Iter) -> (String, Range) {
-    log::trace!("scan_identifier");
+fn scan_identifier_or_keyword(iter: &mut Iter) -> (Token, Range) {
+    log::trace!("scan_identifier_or_keyword");
     let mut name = String::new();
     let mut start = None;
     let mut end = 0;
@@ -299,7 +260,7 @@ fn scan_identifier(iter: &mut Iter) -> (String, Range) {
     }
 
     (
-        name.trim().to_string(),
+        to_token(name.trim()),
         Range {
             start: start.unwrap_or(0),
             end,
@@ -307,7 +268,45 @@ fn scan_identifier(iter: &mut Iter) -> (String, Range) {
     )
 }
 
+fn to_token(identifier: &str) -> Token {
+    log::trace!("to_token: {}", identifier);
+    match identifier {
+        "if" => Token::If,
+        "else" => Token::Else,
+        "endif" => Token::EndIf,
+        "for" => Token::For,
+        "endfor" => Token::EndFor,
+        "in" => Token::In,
+        "import" => Token::Import,
+        "with" => Token::With,
+        "as" => Token::As,
+        other => Token::Identifier(other.to_string()),
+    }
+}
+
+fn scan_line(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> {
+    eat_spaces(iter);
+
+    let (token, range) = scan_identifier_or_keyword(iter);
+    tokens.push((token.clone(), range));
+
+    eat_spaces(iter);
+
+    match token {
+        Token::Import => {
+            let (import_details, range) = scan_import_details(iter);
+            tokens.push((Token::ImportDetails(import_details), range));
+        }
+        _ => {
+            tokens = scan_identifiers(iter, tokens)?;
+        }
+    }
+
+    Ok(tokens)
+}
+
 fn scan_import_details(iter: &mut Iter) -> (String, Range) {
+    log::trace!("scan_import_details");
     let mut details = String::new();
     let mut start = None;
     let mut end = 0;
@@ -689,9 +688,6 @@ fn error_to_string(error: Error) -> String {
             _ => format!("Unknown IO Error: {}", filepath.to_string_lossy()),
         },
         Error::Scan(error, source) => match error {
-            ScanError::UnknownKeyword(identifier, range) => {
-                explain_with_source(&format!("Unknown keyword: {}", identifier), source, range)
-            }
             ScanError::UnexpectedGrapheme(grapheme, position) => {
                 let range = Range {
                     start: position,
@@ -706,9 +702,27 @@ fn error_to_string(error: Error) -> String {
             ScanError::UnexpectedEnd => "Unexpected end".to_string(),
         },
         Error::Parse(error, source) => match error {
-            ParserError::UnexpectedToken(token, range) => {
-                explain_with_source(&format!("Unexpected token: {:?}", token), source, range)
-            }
+            ParserError::UnexpectedToken(token, range) => match token {
+                Token::Identifier(name) => {
+                    explain_with_source(&format!("Unexpected identifier: {}", name), source, range)
+                }
+
+                Token::Import
+                | Token::With
+                | Token::As
+                | Token::OpenStmt
+                | Token::CloseStmt
+                | Token::If
+                | Token::Else
+                | Token::EndIf
+                | Token::For
+                | Token::EndFor
+                | Token::In => {
+                    explain_with_source(&format!("Unexpected keyword: {}", token), source, range)
+                }
+
+                _ => explain_with_source(&format!("Unexpected token: {:?}", token), source, range),
+            },
             ParserError::UnexpectedEnd => "Unexpected end".to_string(),
         },
     }
@@ -1062,5 +1076,10 @@ mod test {
     #[test]
     fn test_error_unknown_keyword() {
         assert_render!(r#"Hello {% wrong %}"#);
+    }
+
+    #[test]
+    fn test_error_unexpected_keyword() {
+        assert_render!(r#"Hello {% in %}"#);
     }
 }

@@ -1,0 +1,15 @@
+---
+source: src/main.rs
+assertion_line: 1135
+expression: "Hello {% in %}"
+
+---
+Unexpected keyword: in
+
+error: 
+  ┌─ -test-:1:10
+  │
+1 │ Hello {% in %}
+  │          ^^
+
+
