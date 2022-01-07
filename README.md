@@ -6,10 +6,31 @@ This project provides a Rust program that parses a basic template format and out
 with 'render' functions that can be imported and called to render the template with different
 parameters.
 
+## Installation
+
+Download pre-built binaries for Linux from the [Actions](https://github.com/michaeljones/gleam-templates/actions) tab.
+
+Build from source with:
+
+```
+cargo install --path .
+```
+
 ## Usage
 
+Run:
+
+```
+templates
+```
+
+At the root of your project and it will walk your project folder structure and compile any template
+files it finds.
+
 Template files should have a `.gleamx` extension though that needs to change as it promises JSX-like
-behaviour instead of text templates. You can compile the examples in the project with `cargo run`.
+behaviour instead of text templates. Templates are compiled into `.gleam` files that can be imported
+like any other regular module. The modules expose a `render` function, that returns a `String`, and
+`render_builder` function that returns a `StringBuilder`.
 
 Some errors, mostly syntax, will be picked up by the Rust code but it is possible to generate
 invalid modules and so the Gleam compiler will pick up further errors.
