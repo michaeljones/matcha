@@ -368,6 +368,7 @@ dependencies = [
 name = "templates"
 version = "0.1.0"
 dependencies = [
+ "atty",
  "codespan-reporting",
  "env_logger",
  "insta",

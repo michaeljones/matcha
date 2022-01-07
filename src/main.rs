@@ -842,10 +842,18 @@ fn convert(filepath: &std::path::Path) {
     match result {
         Ok(()) => {}
         Err(error) => {
-            let mut writer = StandardStream::stderr(ColorChoice::Auto);
+            let mut writer = StandardStream::stderr(color_choice());
             write_error(&mut writer, error);
         }
     };
+}
+
+fn color_choice() -> ColorChoice {
+    if atty::is(atty::Stream::Stderr) {
+        termcolor::ColorChoice::Auto
+    } else {
+        termcolor::ColorChoice::Never
+    }
 }
 
 #[derive(Debug, StructOpt)]
