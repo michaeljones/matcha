@@ -1,11 +1,14 @@
 ---
 source: src/main.rs
-assertion_line: 313
+assertion_line: 830
 expression: "Hello { name }, good to meet you"
 
 ---
 [
-    Text(
-        "Hello { name }, good to meet you",
+    (
+        Text(
+            "Hello { name }, good to meet you",
+        ),
+        0..31,
     ),
 ]

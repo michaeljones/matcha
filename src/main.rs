@@ -1,8 +1,22 @@
+use std::collections::{HashMap, HashSet};
+use std::fmt::Debug;
+use std::hash::Hash;
+
+use codespan_reporting::diagnostic::{Diagnostic, Label};
+use codespan_reporting::files::SimpleFiles;
+use codespan_reporting::term;
+use codespan_reporting::term::termcolor::Buffer;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
 
-use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
+#[derive(Debug, PartialEq, Clone)]
+pub struct Source {
+    pub filename: String,
+    pub contents: String,
+}
+
+pub type Range = std::ops::Range<usize>;
+pub type Position = usize;
 
 // From: https://stackoverflow.com/a/47648303/98555
 fn dedup<T: Eq + Hash + Clone>(v: &mut Vec<T>) {
@@ -39,12 +53,14 @@ enum Token {
 
 #[derive(Debug)]
 enum ScanError {
-    UnknownKeyword(String),
-    UnexpectedGrapheme(String),
+    UnknownKeyword(String, Range),
+    UnexpectedGrapheme(String, Position),
     UnexpectedEnd,
 }
 
-fn scan(contents: &str) -> Result<Vec<Token>, ScanError> {
+type Tokens = Vec<(Token, Range)>;
+
+fn scan(contents: &str) -> Result<Tokens, ScanError> {
     log::trace!("scan");
     let iter = contents.grapheme_indices(true);
     let mut tokens = vec![];
@@ -54,135 +70,184 @@ fn scan(contents: &str) -> Result<Vec<Token>, ScanError> {
     Ok(tokens)
 }
 
-fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError> {
+fn scan_plain(iter: &mut Iter, tokens: &mut Tokens) -> Result<(), ScanError> {
     log::trace!("scan_plain");
     let mut buffer = String::new();
+    let mut buffer_start_index = None;
+    let mut buffer_end_index = 0;
     loop {
-        match iter.peek() {
-            Some((_index, "{")) => {
-                iter.next();
-
-                if let Some((_, "{")) = iter.peek() {
+        match iter.next() {
+            Some((first_index, "{")) => {
+                if let Some((second_index, "{")) = iter.peek() {
                     if !buffer.is_empty() {
-                        tokens.push(Token::Text(buffer));
+                        tokens.push((
+                            Token::Text(buffer),
+                            Range {
+                                start: buffer_start_index.unwrap_or(0),
+                                end: first_index,
+                            },
+                        ));
                         buffer = String::new();
                     }
 
-                    tokens.push(Token::OpenValue);
+                    tokens.push((
+                        Token::OpenValue,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
                     iter.next();
 
                     eat_spaces(iter);
-                    let identifier = scan_identifier(iter);
-                    tokens.push(Token::Identifier(identifier));
+                    let (identifier, range) = scan_identifier(iter);
+                    tokens.push((Token::Identifier(identifier), range));
                     eat_spaces(iter);
-                } else if let Some((_, "%")) = iter.peek() {
+                } else if let Some((second_index, "%")) = iter.peek() {
                     if !buffer.is_empty() {
-                        tokens.push(Token::Text(buffer));
+                        tokens.push((
+                            Token::Text(buffer),
+                            Range {
+                                start: buffer_start_index.unwrap_or(0),
+                                end: first_index,
+                            },
+                        ));
                         buffer = String::new();
                     }
 
-                    tokens.push(Token::OpenStmt);
+                    tokens.push((
+                        Token::OpenStmt,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
                     iter.next();
 
                     eat_spaces(iter);
-                    let identifier = scan_identifier(iter);
-                    let keyword_token = identifier_to_token(&identifier)?;
-                    tokens.push(keyword_token.clone());
+                    let (identifier, range) = scan_identifier(iter);
+                    let keyword_token = identifier_to_token(&identifier, &range)?;
+                    tokens.push((keyword_token.clone(), range));
 
                     eat_spaces(iter);
 
                     match keyword_token {
                         Token::If => {
-                            let identifier = scan_identifier(iter);
-                            tokens.push(Token::Identifier(identifier));
+                            let (identifier, range) = scan_identifier(iter);
+                            tokens.push((Token::Identifier(identifier), range));
                         }
                         Token::For => {
-                            let identifier = scan_identifier(iter);
-                            tokens.push(Token::Identifier(identifier));
+                            let (identifier, range) = scan_identifier(iter);
+                            tokens.push((Token::Identifier(identifier), range));
 
                             eat_spaces(iter);
 
-                            let identifier = scan_identifier(iter);
-                            let keyword_token = identifier_to_token(&identifier)?;
-                            tokens.push(keyword_token.clone());
+                            let (identifier, range) = scan_identifier(iter);
+                            let keyword_token = identifier_to_token(&identifier, &range)?;
+                            tokens.push((keyword_token.clone(), range));
 
                             eat_spaces(iter);
 
-                            let identifier = scan_identifier(iter);
-                            tokens.push(Token::Identifier(identifier));
+                            let (identifier, range) = scan_identifier(iter);
+                            tokens.push((Token::Identifier(identifier), range));
                         }
                         _ => {}
                     }
 
                     eat_spaces(iter);
-                } else if let Some((_, ">")) = iter.peek() {
-                    tokens.push(Token::OpenLine);
+                } else if let Some((second_index, ">")) = iter.peek() {
+                    tokens.push((
+                        Token::OpenLine,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
                     iter.next();
 
                     eat_spaces(iter);
 
-                    let identifier = scan_identifier(iter);
-                    let keyword_token = identifier_to_token(&identifier)?;
-                    tokens.push(keyword_token.clone());
+                    let (identifier, range) = scan_identifier(iter);
+                    let keyword_token = identifier_to_token(&identifier, &range)?;
+                    tokens.push((keyword_token.clone(), range));
 
                     eat_spaces(iter);
 
                     match keyword_token {
                         Token::Import => {
-                            let import_details = scan_import_details(iter);
-                            tokens.push(Token::ImportDetails(import_details));
+                            let (import_details, range) = scan_import_details(iter);
+                            tokens.push((Token::ImportDetails(import_details), range));
                         }
                         Token::With => {
-                            let identifier = scan_identifier(iter);
-                            tokens.push(Token::Identifier(identifier));
+                            let (identifier, range) = scan_identifier(iter);
+                            tokens.push((Token::Identifier(identifier), range));
 
                             eat_spaces(iter);
 
-                            let identifier = scan_identifier(iter);
-                            let keyword_token = identifier_to_token(&identifier)?;
-                            tokens.push(keyword_token.clone());
+                            let (identifier, range) = scan_identifier(iter);
+                            let keyword_token = identifier_to_token(&identifier, &range)?;
+                            tokens.push((keyword_token.clone(), range));
 
                             eat_spaces(iter);
 
-                            let identifier = scan_identifier(iter);
-                            tokens.push(Token::Identifier(identifier));
+                            let (identifier, range) = scan_identifier(iter);
+                            tokens.push((Token::Identifier(identifier), range));
+
+                            eat_spaces(iter);
                         }
                         _ => {}
                     }
 
-                    consume_grapheme(iter, "\n")?;
-                    tokens.push(Token::CloseLine);
+                    let range = consume_grapheme(iter, "\n")?;
+                    tokens.push((Token::CloseLine, range));
                 } else {
                     buffer.push('{');
                 }
             }
-            Some((_index, "}")) => {
-                iter.next();
-
-                if let Some((_, "}")) = iter.peek() {
-                    tokens.push(Token::CloseValue);
+            Some((first_index, "}")) => {
+                if let Some((second_index, "}")) = iter.peek() {
+                    tokens.push((
+                        Token::CloseValue,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
+                    buffer_start_index = None;
                     iter.next();
                 } else {
                     buffer.push('}');
                 }
             }
-            Some((_index, "%")) => {
-                iter.next();
-
-                if let Some((_, "}")) = iter.peek() {
-                    tokens.push(Token::CloseStmt);
+            Some((first_index, "%")) => {
+                if let Some((second_index, "}")) = iter.peek() {
+                    tokens.push((
+                        Token::CloseStmt,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
+                    buffer_start_index = None;
                     iter.next();
                 } else {
                     buffer.push('%');
                 }
             }
-            Some((_index, grapheme)) => {
+            Some((index, grapheme)) => {
                 buffer.push_str(grapheme);
-                iter.next();
+                buffer_start_index = buffer_start_index.or(Some(index));
+                buffer_end_index = index;
             }
-            _ => {
+            None => {
                 if !buffer.is_empty() {
-                    tokens.push(Token::Text(buffer));
+                    tokens.push((
+                        Token::Text(buffer),
+                        Range {
+                            start: buffer_start_index.unwrap_or(0),
+                            end: buffer_end_index,
+                        },
+                    ));
                 }
                 return Ok(());
             }
@@ -190,7 +255,7 @@ fn scan_plain(iter: &mut Iter, tokens: &mut Vec<Token>) -> Result<(), ScanError>
     }
 }
 
-fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
+fn identifier_to_token(identifier: &str, range: &Range) -> Result<Token, ScanError> {
     log::trace!("identifier_to_token: {}", identifier);
     match identifier {
         "if" => Ok(Token::If),
@@ -202,13 +267,18 @@ fn identifier_to_token(identifier: &str) -> Result<Token, ScanError> {
         "import" => Ok(Token::Import),
         "with" => Ok(Token::With),
         "as" => Ok(Token::As),
-        _ => Err(ScanError::UnknownKeyword(identifier.to_string())),
+        _ => Err(ScanError::UnknownKeyword(
+            identifier.to_string(),
+            range.clone(),
+        )),
     }
 }
 
-fn scan_identifier(iter: &mut Iter) -> String {
+fn scan_identifier(iter: &mut Iter) -> (String, Range) {
     log::trace!("scan_identifier");
     let mut name = String::new();
+    let mut start = None;
+    let mut end = 0;
 
     loop {
         match iter.peek() {
@@ -216,7 +286,9 @@ fn scan_identifier(iter: &mut Iter) -> String {
             | Some((_index, "%")) => {
                 break;
             }
-            Some((_index, grapheme)) => {
+            Some((index, grapheme)) => {
+                start = start.or(Some(*index));
+                end = *index + 1;
                 name.push_str(grapheme);
                 iter.next();
             }
@@ -226,18 +298,29 @@ fn scan_identifier(iter: &mut Iter) -> String {
         }
     }
 
-    name.trim().to_string()
+    (
+        name.trim().to_string(),
+        Range {
+            start: start.unwrap_or(0),
+            end,
+        },
+    )
 }
 
-fn scan_import_details(iter: &mut Iter) -> String {
+fn scan_import_details(iter: &mut Iter) -> (String, Range) {
     let mut details = String::new();
+    let mut start = None;
+    let mut end = 0;
 
     loop {
         match iter.peek() {
             Some((_index, "\n")) => {
                 break;
             }
-            Some((_index, grapheme)) => {
+            Some((index, grapheme)) => {
+                start = start.or(Some(*index));
+                end = *index + 1;
+
                 details.push_str(grapheme);
                 iter.next();
             }
@@ -247,15 +330,24 @@ fn scan_import_details(iter: &mut Iter) -> String {
         }
     }
 
-    details
+    (
+        details,
+        Range {
+            start: start.unwrap_or(0),
+            end,
+        },
+    )
 }
 
-fn consume_grapheme(iter: &mut Iter, expected: &str) -> Result<(), ScanError> {
+fn consume_grapheme(iter: &mut Iter, expected: &str) -> Result<Range, ScanError> {
     log::trace!("consume_grapheme");
     match iter.next() {
-        Some((_, grapheme)) if grapheme == expected => Ok(()),
+        Some((index, grapheme)) if grapheme == expected => Ok(Range {
+            start: index,
+            end: index,
+        }),
         entry => Err(entry
-            .map(|(_, value)| ScanError::UnexpectedGrapheme(value.to_string()))
+            .map(|(index, value)| ScanError::UnexpectedGrapheme(value.to_string(), index))
             .unwrap_or(ScanError::UnexpectedEnd)),
     }
 }
@@ -269,7 +361,7 @@ fn eat_spaces(iter: &mut Iter) {
 
 // Parsing
 
-type TokenIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Token>>;
+type TokenIter<'a> = std::iter::Peekable<std::slice::Iter<'a, (Token, Range)>>;
 
 #[derive(Debug)]
 enum Node {
@@ -283,7 +375,7 @@ enum Node {
 
 #[derive(Debug)]
 enum ParserError {
-    UnexpectedToken(Token),
+    UnexpectedToken(Token, Range),
     UnexpectedEnd,
 }
 
@@ -294,9 +386,9 @@ fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
 
 fn parse_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     match tokens.next() {
-        Some(Token::If) => parse_if_statement(tokens),
-        Some(Token::For) => parse_for_statement(tokens),
-        Some(token) => Err(ParserError::UnexpectedToken(token.clone())),
+        Some((Token::If, _)) => parse_if_statement(tokens),
+        Some((Token::For, _)) => parse_for_statement(tokens),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
@@ -307,22 +399,28 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
 
     loop {
         match tokens.next() {
-            Some(Token::Text(text)) => {
+            Some((Token::Text(text), _)) => {
                 ast.push(Node::Text(text.clone()));
             }
-            Some(Token::OpenValue) => {
+            Some((Token::OpenValue, _)) => {
                 let name = extract_identifier(tokens)?;
                 ast.push(Node::Identifier(name.clone()));
                 consume_token(tokens, Token::CloseValue)?;
             }
-            Some(Token::OpenStmt) => {
-                if let Some(Token::Else) | Some(Token::EndIf) | Some(Token::EndFor) = tokens.peek()
+            Some((Token::OpenStmt, _)) => {
+                if let Some((Token::Else, _)) | Some((Token::EndIf, _)) | Some((Token::EndFor, _)) =
+                    tokens.peek()
                 {
                     if in_statement {
                         break;
                     } else {
                         match tokens.next() {
-                            Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
+                            Some((token, range)) => {
+                                return Err(ParserError::UnexpectedToken(
+                                    token.clone(),
+                                    range.clone(),
+                                ))
+                            }
                             None => return Err(ParserError::UnexpectedEnd),
                         }
                     }
@@ -330,13 +428,13 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 let node = parse_statement(tokens)?;
                 ast.push(node);
             }
-            Some(Token::OpenLine) => {
+            Some((Token::OpenLine, _)) => {
                 match tokens.next() {
-                    Some(Token::Import) => {
+                    Some((Token::Import, _)) => {
                         let import_details = extract_import_details(tokens)?;
                         ast.push(Node::Import(import_details))
                     }
-                    Some(Token::With) => {
+                    Some((Token::With, _)) => {
                         let identifier = extract_identifier(tokens)?;
                         consume_token(tokens, Token::As)?;
                         let type_ = extract_identifier(tokens)?;
@@ -346,7 +444,9 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 }
                 consume_token(tokens, Token::CloseLine)?;
             }
-            Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
+            Some((token, range)) => {
+                return Err(ParserError::UnexpectedToken(token.clone(), range.clone()))
+            }
             None => {
                 break;
             }
@@ -365,18 +465,18 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     let mut else_nodes = vec![];
 
     match tokens.next() {
-        Some(Token::EndIf) => {
+        Some((Token::EndIf, _)) => {
             consume_token(tokens, Token::CloseStmt)?;
         }
-        Some(Token::Else) => {
+        Some((Token::Else, _)) => {
             consume_token(tokens, Token::CloseStmt)?;
 
             else_nodes = parse_inner(tokens, true)?;
             consume_token(tokens, Token::EndIf)?;
             consume_token(tokens, Token::CloseStmt)?;
         }
-        Some(token) => {
-            return Err(ParserError::UnexpectedToken(token.clone()));
+        Some((token, range)) => {
+            return Err(ParserError::UnexpectedToken(token.clone(), range.clone()));
         }
         None => {
             return Err(ParserError::UnexpectedEnd);
@@ -404,8 +504,8 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
-        Some(Token::Identifier(name)) => Ok(name.clone()),
-        Some(token) => Err(ParserError::UnexpectedToken(token.clone())),
+        Some((Token::Identifier(name), _)) => Ok(name.clone()),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
@@ -413,21 +513,18 @@ fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
 fn extract_import_details(tokens: &mut TokenIter) -> Result<String, ParserError> {
     log::trace!("extract_import_details");
     match tokens.next() {
-        Some(Token::ImportDetails(details)) => Ok(details.clone()),
-        Some(token) => Err(ParserError::UnexpectedToken(token.clone())),
+        Some((Token::ImportDetails(details), _)) => Ok(details.clone()),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
 
 fn consume_token(tokens: &mut TokenIter, token: Token) -> Result<(), ParserError> {
     log::trace!("consume_token");
-    let next_token = tokens.next();
-    if next_token == Some(&token) {
-        Ok(())
-    } else {
-        Err(next_token
-            .map(|token_value| ParserError::UnexpectedToken(token_value.clone()))
-            .unwrap_or(ParserError::UnexpectedEnd))
+    match tokens.next() {
+        Some((matched_token, _)) if *matched_token == token => Ok(()),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
+        None => Err(ParserError::UnexpectedEnd),
     }
 }
 
@@ -573,13 +670,101 @@ fn render_lines(
     (builder_lines, params, imports, type_lookup)
 }
 
+#[derive(Debug)]
+enum Error {
+    IO(std::io::Error, std::path::PathBuf),
+    Scan(ScanError, Source),
+    Parse(ParserError, Source),
+}
+
+fn error_to_string(error: Error) -> String {
+    match error {
+        Error::IO(error, filepath) => match error.kind() {
+            std::io::ErrorKind::NotFound => {
+                format!("File not found: {}", filepath.to_string_lossy())
+            }
+            std::io::ErrorKind::PermissionDenied => {
+                format!("Permission denied: {}", filepath.to_string_lossy())
+            }
+            _ => format!("Unknown IO Error: {}", filepath.to_string_lossy()),
+        },
+        Error::Scan(error, source) => match error {
+            ScanError::UnknownKeyword(identifier, range) => {
+                explain_with_source(&format!("Unknown keyword: {}", identifier), source, range)
+            }
+            ScanError::UnexpectedGrapheme(grapheme, position) => {
+                let range = Range {
+                    start: position,
+                    end: position,
+                };
+                explain_with_source(
+                    &format!("Unexpected character: {}", grapheme),
+                    source,
+                    range,
+                )
+            }
+            ScanError::UnexpectedEnd => "Unexpected end".to_string(),
+        },
+        Error::Parse(error, source) => match error {
+            ParserError::UnexpectedToken(token, range) => {
+                explain_with_source(&format!("Unexpected token: {:?}", token), source, range)
+            }
+            ParserError::UnexpectedEnd => "Unexpected end".to_string(),
+        },
+    }
+}
+
+fn explain_with_source(text: &str, source: Source, range: Range) -> String {
+    format!(
+        r#"{}
+
+{}"#,
+        text,
+        pretty_print(source, range)
+    )
+}
+
+fn pretty_print(source: Source, range: Range) -> String {
+    let mut files = SimpleFiles::new();
+    let file_id = files.add(source.filename, source.contents);
+    let diagnostic = Diagnostic::error().with_labels(vec![Label::primary(file_id, range)]);
+
+    let mut writer = Buffer::no_color();
+    let config = codespan_reporting::term::Config::default();
+
+    let _ = term::emit(&mut writer, &config, &files, &diagnostic);
+
+    std::str::from_utf8(writer.as_slice())
+        .unwrap_or("Failure")
+        .to_string()
+}
+
 fn convert(filepath: &std::path::Path) {
-    let contents = std::fs::read_to_string(filepath).expect("Unable to read file");
-    let tokens = scan(&contents).expect("Unable to scan");
-    let ast = parse(&mut tokens.iter().peekable()).expect("Unable to parse file");
-    let output = render(&mut ast.iter().peekable());
-    let out_file_path = filepath.with_extension("gleam");
-    std::fs::write(out_file_path, output).expect("Unable to write file");
+    let result = std::fs::read_to_string(filepath)
+        .map_err(|err| Error::IO(err, filepath.to_path_buf()))
+        .and_then(|contents| {
+            let source = Source {
+                filename: filepath.to_string_lossy().into_owned(),
+                contents: contents.clone(),
+            };
+            scan(&contents)
+                .map_err(|err| Error::Scan(err, source.clone()))
+                .and_then(|tokens| {
+                    parse(&mut tokens.iter().peekable())
+                        .map_err(|error| Error::Parse(error, source.clone()))
+                })
+        })
+        .map(|ast| render(&mut ast.iter().peekable()))
+        .and_then(|output| {
+            let out_file_path = filepath.with_extension("gleam");
+            std::fs::write(&out_file_path, output)
+                .map_err(|err| Error::IO(err, out_file_path.to_path_buf()))
+        });
+
+    match result {
+        Ok(()) => {}
+        Err(error) => eprintln!("{}", error_to_string(error)),
+    };
 }
 
 fn main() {
@@ -597,13 +782,27 @@ fn main() {
 mod test {
     use super::*;
 
+    fn debug_format_result<T: Debug, E: Debug>(result: Result<T, E>) -> String {
+        match result {
+            Ok(value) => format!("{:#?}", value),
+            Err(err) => format!("{:#?}", err),
+        }
+    }
+
+    fn format_result(result: Result<String, Error>) -> String {
+        match result {
+            Ok(value) => value,
+            Err(err) => error_to_string(err),
+        }
+    }
+
     #[macro_export]
     macro_rules! assert_scan {
         ($text:expr $(,)?) => {{
             let _ = env_logger::try_init();
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                format!("{:#?}", scan($text).expect("Scan failed")),
+                debug_format_result(scan($text)),
                 $text
             );
         }};
@@ -613,13 +812,19 @@ mod test {
     macro_rules! assert_parse {
         ($text:expr $(,)?) => {{
             let _ = env_logger::try_init();
-            let tokens = scan($text).expect("Scan failed");
+            let source = Source {
+                filename: "-test-".to_string(),
+                contents: $text.to_string(),
+            };
+            let result = scan($text)
+                .map_err(|err| Error::Scan(err, source.clone()))
+                .and_then(|tokens| {
+                    parse(&mut tokens.iter().peekable())
+                        .map_err(|err| Error::Parse(err, source.clone()))
+                });
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                format!(
-                    "{:#?}",
-                    parse(&mut tokens.iter().peekable()).expect("Parse failed")
-                ),
+                debug_format_result(result),
                 $text
             );
         }};
@@ -629,13 +834,18 @@ mod test {
     macro_rules! assert_render {
         ($text:expr $(,)?) => {{
             let _ = env_logger::try_init();
-            let tokens = scan($text).expect("Scan failed");
-            let ast = parse(&mut tokens.iter().peekable()).expect("Parse failed");
-            insta::assert_snapshot!(
-                insta::internals::AutoName,
-                render(&mut ast.iter().peekable()),
-                $text
-            );
+            let source = Source {
+                filename: "-test-".to_string(),
+                contents: $text.to_string(),
+            };
+            let result = scan($text)
+                .map_err(|err| Error::Scan(err, source.clone()))
+                .and_then(|tokens| {
+                    parse(&mut tokens.iter().peekable())
+                        .map_err(|err| Error::Parse(err, source.clone()))
+                })
+                .map(|ast| render(&mut ast.iter().peekable()));
+            insta::assert_snapshot!(insta::internals::AutoName, format_result(result), $text);
         }};
     }
 
@@ -845,5 +1055,12 @@ mod test {
     #[test]
     fn test_render_quotes() {
         assert_render!(r#"<div class="my-class">{{ name }}</div>"#);
+    }
+
+    // Errors
+
+    #[test]
+    fn test_error_unknown_keyword() {
+        assert_render!(r#"Hello {% wrong %}"#);
     }
 }

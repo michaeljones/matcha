@@ -1,29 +1,68 @@
 ---
 source: src/main.rs
-assertion_line: 501
+assertion_line: 866
 expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
 
 ---
 [
-    Text(
-        "Hello ",
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
     ),
-    OpenStmt,
-    For,
-    Identifier(
-        "item",
+    (
+        OpenStmt,
+        6..7,
     ),
-    In,
-    Identifier(
-        "list",
+    (
+        For,
+        9..12,
     ),
-    CloseStmt,
-    OpenValue,
-    Identifier(
-        "item",
+    (
+        Identifier(
+            "item",
+        ),
+        13..17,
     ),
-    CloseValue,
-    OpenStmt,
-    EndFor,
-    CloseStmt,
+    (
+        In,
+        18..20,
+    ),
+    (
+        Identifier(
+            "list",
+        ),
+        21..25,
+    ),
+    (
+        CloseStmt,
+        26..27,
+    ),
+    (
+        OpenValue,
+        28..29,
+    ),
+    (
+        Identifier(
+            "item",
+        ),
+        31..35,
+    ),
+    (
+        CloseValue,
+        36..37,
+    ),
+    (
+        OpenStmt,
+        38..39,
+    ),
+    (
+        EndFor,
+        41..47,
+    ),
+    (
+        CloseStmt,
+        48..49,
+    ),
 ]
