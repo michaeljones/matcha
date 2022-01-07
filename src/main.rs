@@ -5,7 +5,7 @@ use std::hash::Hash;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
-use codespan_reporting::term::termcolor::Buffer;
+use codespan_reporting::term::termcolor::{self, ColorChoice, StandardStream};
 use structopt::StructOpt;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
@@ -702,16 +702,18 @@ enum Error {
     Parse(ParserError, Source),
 }
 
-fn error_to_string(error: Error) -> String {
+fn write_error<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
     match error {
         Error::IO(error, filepath) => match error.kind() {
             std::io::ErrorKind::NotFound => {
-                format!("File not found: {}", filepath.to_string_lossy())
+                let _ = write!(writer, "File not found: {}", filepath.to_string_lossy());
             }
             std::io::ErrorKind::PermissionDenied => {
-                format!("Permission denied: {}", filepath.to_string_lossy())
+                let _ = write!(writer, "Permission denied: {}", filepath.to_string_lossy());
             }
-            _ => format!("Unknown IO Error: {}", filepath.to_string_lossy()),
+            _ => {
+                let _ = write!(writer, "Unknown IO Error: {}", filepath.to_string_lossy());
+            }
         },
         Error::Scan(error, source) => match error {
             ScanError::UnexpectedGrapheme(grapheme, position) => {
@@ -720,18 +722,24 @@ fn error_to_string(error: Error) -> String {
                     end: position,
                 };
                 explain_with_source(
+                    writer,
                     &format!("Unexpected character: {}", grapheme),
                     source,
                     range,
-                )
+                );
             }
-            ScanError::UnexpectedEnd => "Unexpected end".to_string(),
+            ScanError::UnexpectedEnd => {
+                let _ = write!(writer, "Unexpected end");
+            }
         },
         Error::Parse(error, source) => match error {
             ParserError::UnexpectedToken(token, range, expected) => match token {
-                Token::Identifier(name) => {
-                    explain_with_source(&format!("Unexpected identifier: {}", name), source, range)
-                }
+                Token::Identifier(name) => explain_with_source(
+                    writer,
+                    &format!("Unexpected identifier: {}", name),
+                    source,
+                    range,
+                ),
 
                 Token::Import
                 | Token::With
@@ -746,12 +754,14 @@ fn error_to_string(error: Error) -> String {
                 | Token::In => {
                     if expected.is_empty() {
                         explain_with_source(
+                            writer,
                             &format!("Unexpected keyword: {}", token),
                             source,
                             range,
                         )
                     } else {
                         explain_with_source(
+                            writer,
                             &format!(
                                 "Unexpected keyword: {}. Expected one of: {}",
                                 token,
@@ -767,36 +777,44 @@ fn error_to_string(error: Error) -> String {
                     }
                 }
 
-                _ => explain_with_source(&format!("Unexpected token: {:?}", token), source, range),
+                _ => explain_with_source(
+                    writer,
+                    &format!("Unexpected token: {:?}", token),
+                    source,
+                    range,
+                ),
             },
-            ParserError::UnexpectedEnd => "Unexpected end".to_string(),
+            ParserError::UnexpectedEnd => {
+                let _ = write!(writer, "Unexpected end");
+            }
         },
     }
 }
 
-fn explain_with_source(text: &str, source: Source, range: Range) -> String {
-    format!(
+fn explain_with_source<W: termcolor::WriteColor>(
+    writer: &mut W,
+    text: &str,
+    source: Source,
+    range: Range,
+) {
+    let _ = write!(
+        writer,
         r#"{}
 
-{}"#,
+"#,
         text,
-        pretty_print(source, range)
-    )
+    );
+    pretty_print(writer, source, range);
 }
 
-fn pretty_print(source: Source, range: Range) -> String {
+fn pretty_print<W: termcolor::WriteColor>(writer: &mut W, source: Source, range: Range) {
     let mut files = SimpleFiles::new();
     let file_id = files.add(source.filename, source.contents);
     let diagnostic = Diagnostic::error().with_labels(vec![Label::primary(file_id, range)]);
 
-    let mut writer = Buffer::no_color();
     let config = codespan_reporting::term::Config::default();
 
-    let _ = term::emit(&mut writer, &config, &files, &diagnostic);
-
-    std::str::from_utf8(writer.as_slice())
-        .unwrap_or("Failure")
-        .to_string()
+    let _ = term::emit(writer, &config, &files, &diagnostic);
 }
 
 fn convert(filepath: &std::path::Path) {
@@ -823,7 +841,10 @@ fn convert(filepath: &std::path::Path) {
 
     match result {
         Ok(()) => {}
-        Err(error) => eprintln!("{}", error_to_string(error)),
+        Err(error) => {
+            let mut writer = StandardStream::stderr(ColorChoice::Auto);
+            write_error(&mut writer, error);
+        }
     };
 }
 
@@ -850,7 +871,18 @@ fn main() {
 
 #[cfg(test)]
 mod test {
+    use codespan_reporting::term::termcolor::Buffer;
+
     use super::*;
+
+    fn error_to_string(error: Error) -> String {
+        let mut writer = Buffer::no_color();
+        write_error(&mut writer, error);
+
+        std::str::from_utf8(writer.as_slice())
+            .unwrap_or("Failure")
+            .to_string()
+    }
 
     fn debug_format_result<T: Debug, E: Debug>(result: Result<T, E>) -> String {
         match result {
