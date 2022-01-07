@@ -374,7 +374,7 @@ enum Node {
 
 #[derive(Debug)]
 enum ParserError {
-    UnexpectedToken(Token, Range),
+    UnexpectedToken(Token, Range, Vec<Token>),
     UnexpectedEnd,
 }
 
@@ -387,7 +387,11 @@ fn parse_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     match tokens.next() {
         Some((Token::If, _)) => parse_if_statement(tokens),
         Some((Token::For, _)) => parse_for_statement(tokens),
-        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(
+            token.clone(),
+            range.clone(),
+            vec![Token::If, Token::For],
+        )),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
@@ -418,6 +422,7 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                                 return Err(ParserError::UnexpectedToken(
                                     token.clone(),
                                     range.clone(),
+                                    vec![Token::If, Token::For],
                                 ))
                             }
                             None => return Err(ParserError::UnexpectedEnd),
@@ -444,7 +449,11 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 consume_token(tokens, Token::CloseLine)?;
             }
             Some((token, range)) => {
-                return Err(ParserError::UnexpectedToken(token.clone(), range.clone()))
+                return Err(ParserError::UnexpectedToken(
+                    token.clone(),
+                    range.clone(),
+                    vec![],
+                ))
             }
             None => {
                 break;
@@ -475,7 +484,11 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
             consume_token(tokens, Token::CloseStmt)?;
         }
         Some((token, range)) => {
-            return Err(ParserError::UnexpectedToken(token.clone(), range.clone()));
+            return Err(ParserError::UnexpectedToken(
+                token.clone(),
+                range.clone(),
+                vec![Token::EndIf, Token::Else],
+            ));
         }
         None => {
             return Err(ParserError::UnexpectedEnd);
@@ -504,7 +517,11 @@ fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
         Some((Token::Identifier(name), _)) => Ok(name.clone()),
-        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(
+            token.clone(),
+            range.clone(),
+            vec![Token::Identifier("".to_string())],
+        )),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
@@ -513,16 +530,24 @@ fn extract_import_details(tokens: &mut TokenIter) -> Result<String, ParserError>
     log::trace!("extract_import_details");
     match tokens.next() {
         Some((Token::ImportDetails(details), _)) => Ok(details.clone()),
-        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
+        Some((token, range)) => Err(ParserError::UnexpectedToken(
+            token.clone(),
+            range.clone(),
+            vec![Token::ImportDetails("".to_string())],
+        )),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
 
-fn consume_token(tokens: &mut TokenIter, token: Token) -> Result<(), ParserError> {
+fn consume_token(tokens: &mut TokenIter, expected_token: Token) -> Result<(), ParserError> {
     log::trace!("consume_token");
     match tokens.next() {
-        Some((matched_token, _)) if *matched_token == token => Ok(()),
-        Some((token, range)) => Err(ParserError::UnexpectedToken(token.clone(), range.clone())),
+        Some((matched_token, _)) if *matched_token == expected_token => Ok(()),
+        Some((matched_token, range)) => Err(ParserError::UnexpectedToken(
+            matched_token.clone(),
+            range.clone(),
+            vec![expected_token.clone()],
+        )),
         None => Err(ParserError::UnexpectedEnd),
     }
 }
@@ -702,7 +727,7 @@ fn error_to_string(error: Error) -> String {
             ScanError::UnexpectedEnd => "Unexpected end".to_string(),
         },
         Error::Parse(error, source) => match error {
-            ParserError::UnexpectedToken(token, range) => match token {
+            ParserError::UnexpectedToken(token, range, expected) => match token {
                 Token::Identifier(name) => {
                     explain_with_source(&format!("Unexpected identifier: {}", name), source, range)
                 }
@@ -718,7 +743,27 @@ fn error_to_string(error: Error) -> String {
                 | Token::For
                 | Token::EndFor
                 | Token::In => {
-                    explain_with_source(&format!("Unexpected keyword: {}", token), source, range)
+                    if expected.is_empty() {
+                        explain_with_source(
+                            &format!("Unexpected keyword: {}", token),
+                            source,
+                            range,
+                        )
+                    } else {
+                        explain_with_source(
+                            &format!(
+                                "Unexpected keyword: {}. Expected one of: {}",
+                                token,
+                                expected
+                                    .iter()
+                                    .map(|token| format!("{}", token))
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            ),
+                            source,
+                            range,
+                        )
+                    }
                 }
 
                 _ => explain_with_source(&format!("Unexpected token: {:?}", token), source, range),
@@ -1081,5 +1126,10 @@ mod test {
     #[test]
     fn test_error_unexpected_keyword() {
         assert_render!(r#"Hello {% in %}"#);
+    }
+
+    #[test]
+    fn test_error_unexpected_endif() {
+        assert_render!(r#"Hello {% endif %}"#);
     }
 }

@@ -1,10 +1,10 @@
 ---
 source: src/main.rs
-assertion_line: 1135
+assertion_line: 1128
 expression: "Hello {% in %}"
 
 ---
-Unexpected keyword: in
+Unexpected keyword: in. Expected one of: if, for
 
 error: 
   ┌─ -test-:1:10
