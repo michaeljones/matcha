@@ -1,23 +1,50 @@
 ---
 source: src/main.rs
-assertion_line: 703
+assertion_line: 881
 expression: "{> with user as User\n{{ user }}"
 
 ---
 [
-    OpenLine,
-    With,
-    Identifier(
-        "user",
+    (
+        OpenLine,
+        0..1,
     ),
-    As,
-    Identifier(
-        "User",
+    (
+        With,
+        3..7,
     ),
-    CloseLine,
-    OpenValue,
-    Identifier(
-        "user",
+    (
+        Identifier(
+            "user",
+        ),
+        8..12,
     ),
-    CloseValue,
+    (
+        As,
+        13..15,
+    ),
+    (
+        Identifier(
+            "User",
+        ),
+        16..20,
+    ),
+    (
+        CloseLine,
+        20..20,
+    ),
+    (
+        OpenValue,
+        21..22,
+    ),
+    (
+        Identifier(
+            "user",
+        ),
+        24..28,
+    ),
+    (
+        CloseValue,
+        29..30,
+    ),
 ]

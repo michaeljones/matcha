@@ -1,29 +1,68 @@
 ---
 source: src/main.rs
-assertion_line: 444
+assertion_line: 854
 expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
 
 ---
 [
-    Text(
-        "Hello ",
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
     ),
-    OpenStmt,
-    If,
-    Identifier(
-        "is_user",
+    (
+        OpenStmt,
+        6..7,
     ),
-    CloseStmt,
-    Text(
-        "User",
+    (
+        If,
+        9..11,
     ),
-    OpenStmt,
-    Else,
-    CloseStmt,
-    Text(
-        "Unknown",
+    (
+        Identifier(
+            "is_user",
+        ),
+        12..19,
     ),
-    OpenStmt,
-    EndIf,
-    CloseStmt,
+    (
+        CloseStmt,
+        20..21,
+    ),
+    (
+        Text(
+            "User",
+        ),
+        22..26,
+    ),
+    (
+        OpenStmt,
+        26..27,
+    ),
+    (
+        Else,
+        29..33,
+    ),
+    (
+        CloseStmt,
+        34..35,
+    ),
+    (
+        Text(
+            "Unknown",
+        ),
+        36..43,
+    ),
+    (
+        OpenStmt,
+        43..44,
+    ),
+    (
+        EndIf,
+        46..51,
+    ),
+    (
+        CloseStmt,
+        52..53,
+    ),
 ]
