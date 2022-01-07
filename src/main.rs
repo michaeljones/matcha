@@ -6,6 +6,7 @@ use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::Buffer;
+use structopt::StructOpt;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use walkdir::WalkDir;
 
@@ -826,12 +827,22 @@ fn convert(filepath: &std::path::Path) {
     };
 }
 
+#[derive(Debug, StructOpt)]
+#[structopt(name = "templates", about = "Compiles templates into Gleam modules")]
+struct Opt {
+    #[structopt(short, long)]
+    verbose: bool,
+}
+
 fn main() {
+    let opt = Opt::from_args();
     for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
 
         if path.extension() == Some(std::ffi::OsStr::new("gleamx")) {
-            println!("{}", path.display());
+            if opt.verbose {
+                println!("Converting {}", path.display());
+            }
             convert(&path.to_path_buf());
         }
     }
