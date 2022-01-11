@@ -1,0 +1,130 @@
+name: release
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  build-release:
+    name: build-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build:
+          - macos
+          - macos-arm64
+          - windows-64bit
+        toolchain: [stable]
+        include:
+          - build: macos
+            os: macos-latest
+            target: x86_64-apple-darwin
+          - build: macos-arm64
+            os: macos-11
+            target: aarch64-apple-darwin
+          - build: windows-64bit
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          default: true
+          profile: minimal
+
+      - name: Handle Rust dependencies caching
+        uses: Swatinem/rust-cache@v1
+        with:
+          key: v1-${{ matrix.target }}
+
+      - name: Build release binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - name: Build archive
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            ARCHIVE="gleam-templates-$VERSION-${{ matrix.build }}.zip"
+            cp "target/release/templates.exe" "templates.exe"
+            7z a "$ARCHIVE" "templates.exe"
+            rm templates.exe
+          else
+            ARCHIVE="gleam-templates-$VERSION-${{ matrix.build }}.tar.gz"
+            cp "target/release/templates" "templates"
+            tar -czvf "$ARCHIVE" "templates"
+            rm templates
+          fi
+          openssl dgst -r -sha256 -out "$ARCHIVE".sha256 "$ARCHIVE"
+          openssl dgst -r -sha512 -out "$ARCHIVE".sha512 "$ARCHIVE"
+          echo "ASSET=$ARCHIVE" >> $GITHUB_ENV
+
+      - name: Upload release archive
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            ${{ env.ASSET }}
+            ${{ env.ASSET }}.sha256
+            ${{ env.ASSET }}.sha512
+
+  build-release-musl:
+    runs-on: ubuntu-latest
+    container: clux/muslrust:stable
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Link to predefined musl toolchain
+        run: |
+          ln -s /root/.cargo $HOME/.cargo
+          ln -s /root/.rustup $HOME/.rustup
+
+      - name: Handle Rust dependencies caching
+        uses: Swatinem/rust-cache@v1
+        with:
+          key: v1-linux-musl
+
+      - name: Build release binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - name: Build archive
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          ARCHIVE="gleam-templates-$VERSION-linux-amd64.tar.gz"
+          cp "target/x86_64-unknown-linux-musl/release/templates" "templates"
+          tar -czvf "$ARCHIVE" "templates"
+          openssl dgst -r -sha256 -out "$ARCHIVE".sha256 "$ARCHIVE"
+          openssl dgst -r -sha512 -out "$ARCHIVE".sha512 "$ARCHIVE"
+          echo "ASSET=$ARCHIVE" >> $GITHUB_ENV
+
+      - name: Upload release archive
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            ${{ env.ASSET }}
+            ${{ env.ASSET }}.sha256
+            ${{ env.ASSET }}.sha512
