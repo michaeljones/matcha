@@ -9,6 +9,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
 
 jobs:
 
@@ -45,7 +48,7 @@ jobs:
     - name: Handle Rust dependencies caching
       uses: Swatinem/rust-cache@v1
       with:
-        key: v2${{ matrix.target }}
+        key: v3${{ matrix.target }}
 
     - name: Run tests
       uses: actions-rs/cargo@v1
@@ -93,7 +96,7 @@ jobs:
     - name: Handle Rust dependencies caching
       uses: Swatinem/rust-cache@v1
       with:
-        key: v2${{ matrix.target }}
+        key: v3${{ matrix.target }}
 
     - name: Run
       uses: actions-rs/cargo@v1
