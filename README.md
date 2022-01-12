@@ -8,7 +8,8 @@ parameters.
 
 ## Installation
 
-Download pre-built binaries for Linux from the [Actions](https://github.com/michaeljones/gleam-templates/actions) tab.
+Download pre-built binaries for the latest release from the
+[Releases](https://github.com/michaeljones/gleam-templates/releases) page.
 
 Build from source with:
 
