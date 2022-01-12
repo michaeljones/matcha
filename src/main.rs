@@ -861,10 +861,20 @@ fn color_choice() -> ColorChoice {
 struct Opt {
     #[structopt(short, long)]
     verbose: bool,
+
+    #[structopt(long)]
+    version: bool,
 }
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     let opt = Opt::from_args();
+    if opt.version {
+        println!("{}", VERSION);
+        return;
+    }
+
     for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
 
