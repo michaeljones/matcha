@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+- Added --version flag to executable to print out current version.
+
+## 0.4.0
+
+- Automatic release builds uploaded to GitHub.
+
+  Thanks to @michallepicki.
+
 ## 0.3.0
 
 - Improve error reporting
