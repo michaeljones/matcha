@@ -713,7 +713,9 @@ fn render_lines(
                 params.push(list_identifier.clone());
 
                 // Remove the for-loop identifier which will have been detected as a 'param'
-                loop_params.retain(|value| value != entry_identifier);
+                // We split any discovered identifiers on '.' and compare the first part so that if
+                // the entry_identifier is 'user' and we find 'user.name' we still rule it out
+                loop_params.retain(|value| value.split(".").next() != Some(entry_identifier));
                 params.append(&mut loop_params);
             }
             None => break,
