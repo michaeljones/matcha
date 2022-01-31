@@ -1014,6 +1014,11 @@ mod test {
     }
 
     #[test]
+    fn test_scan_for_as_loop() {
+        assert_scan!("Hello {% for item as Item in list %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_scan_dot_access() {
         assert_scan!("Hello{% if user.is_admin %} Admin{% endif %}");
     }
