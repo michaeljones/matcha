@@ -79,6 +79,18 @@ after `in`.
 </ul>
 ```
 
+Additionally you can use the `as` keyword to associate a type with the items being iterated over.
+This is necessary if you're using a complex object.
+
+```html+jinja
+{> import my_user.{MyUser}
+<ul>
+{% for user as MyUser in users %}
+    <li>{{ user.name }}</li>
+{% endfor %}
+</ul>
+```
+
 ### Import
 
 You can use the `{>` syntax to add import statements to the template. These are used to import types

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added support for 'for .. as .. in ..' syntax to allow associating a type with the items in the
+  list being iterated.
+
 ## 0.5.0
 
 - Added --version flag to executable to print out current version.
