@@ -1,0 +1,30 @@
+---
+source: src/main.rs
+assertion_line: 1186
+expression: "Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
+
+---
+import gleam/string_builder.{StringBuilder}
+import gleam/list
+
+
+
+pub fn render_builder(list list) -> StringBuilder {
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, "Hello,")
+    let builder = list.fold(list, builder, fn(builder, item: Item) {
+            let builder = string_builder.append(builder, " to ")
+    let builder = string_builder.append(builder, item)
+    let builder = string_builder.append(builder, " and ")
+
+        builder
+})
+    let builder = string_builder.append(builder, " everyone else")
+
+    builder
+}
+
+pub fn render(list list) -> String {
+    string_builder.to_string(render_builder(list: list))
+}
+
