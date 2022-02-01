@@ -363,14 +363,16 @@ fn eat_spaces(iter: &mut Iter) {
 
 type TokenIter<'a> = std::iter::Peekable<std::slice::Iter<'a, (Token, Range)>>;
 
+type Type = String;
+
 #[derive(Debug)]
 enum Node {
     Text(String),
     Identifier(String),
     If(String, Vec<Node>, Vec<Node>),
-    For(String, String, Vec<Node>),
+    For(String, Option<Type>, String, Vec<Node>),
     Import(String),
-    With(String, String),
+    With(String, Type),
 }
 
 #[derive(Debug)]
@@ -501,7 +503,22 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 
 fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     let entry_identifier = extract_identifier(tokens)?;
-    consume_token(tokens, Token::In)?;
+    let entry_type = match tokens.next() {
+        Some((Token::As, _)) => {
+            let type_identifier = extract_identifier(tokens)?;
+            consume_token(tokens, Token::In)?;
+            Some(type_identifier)
+        }
+        Some((Token::In, _)) => None,
+        Some((matched_token, range)) => {
+            return Err(ParserError::UnexpectedToken(
+                matched_token.clone(),
+                range.clone(),
+                vec![Token::As, Token::In],
+            ));
+        }
+        None => return Err(ParserError::UnexpectedEnd),
+    };
 
     let list_identifier = extract_identifier(tokens)?;
     consume_token(tokens, Token::CloseStmt)?;
@@ -511,7 +528,12 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     consume_token(tokens, Token::EndFor)?;
     consume_token(tokens, Token::CloseStmt)?;
 
-    Ok(Node::For(entry_identifier, list_identifier, loop_nodes))
+    Ok(Node::For(
+        entry_identifier,
+        entry_type,
+        list_identifier,
+        loop_nodes,
+    ))
 }
 
 fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
@@ -670,22 +692,30 @@ fn render_lines(
                 params.append(&mut if_params);
                 params.append(&mut else_params);
             }
-            Some(Node::For(entry_identifier, list_identifier, loop_nodes)) => {
+            Some(Node::For(entry_identifier, entry_type, list_identifier, loop_nodes)) => {
                 iter.next();
+
+                let entry_type = entry_type
+                    .as_ref()
+                    .map(|value| format!(": {}", value))
+                    .unwrap_or("".to_string());
+
                 let (loop_lines, mut loop_params, _, _) =
                     render_lines(&mut loop_nodes.iter().peekable());
                 builder_lines.push_str(&format!(
-                    r#"    let builder = list.fold({}, builder, fn(builder, {}) {{
+                    r#"    let builder = list.fold({}, builder, fn(builder, {}{}) {{
         {}
         builder
 }})
 "#,
-                    list_identifier, entry_identifier, loop_lines
+                    list_identifier, entry_identifier, entry_type, loop_lines
                 ));
                 params.push(list_identifier.clone());
 
                 // Remove the for-loop identifier which will have been detected as a 'param'
-                loop_params.retain(|value| value != entry_identifier);
+                // We split any discovered identifiers on '.' and compare the first part so that if
+                // the entry_identifier is 'user' and we find 'user.name' we still rule it out
+                loop_params.retain(|value| value.split(".").next() != Some(entry_identifier));
                 params.append(&mut loop_params);
             }
             None => break,
@@ -1014,6 +1044,11 @@ mod test {
     }
 
     #[test]
+    fn test_scan_for_as_loop() {
+        assert_scan!("Hello {% for item as Item in list %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_scan_dot_access() {
         assert_scan!("Hello{% if user.is_admin %} Admin{% endif %}");
     }
@@ -1078,6 +1113,13 @@ mod test {
     }
 
     #[test]
+    fn test_parse_for_as_loop() {
+        assert_parse!(
+            "Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
+        );
+    }
+
+    #[test]
     fn test_parse_dot_access() {
         assert_parse!("Hello{% if user.is_admin %} Admin{% endif %}");
     }
@@ -1139,6 +1181,13 @@ mod test {
     #[test]
     fn test_render_for_loop() {
         assert_render!("Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else");
+    }
+
+    #[test]
+    fn test_render_for_as_loop() {
+        assert_render!(
+            "Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
+        );
     }
 
     #[test]

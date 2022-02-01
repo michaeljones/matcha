@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 1110
-expression: "Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
+assertion_line: 1115
+expression: "Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
 
 ---
 [
@@ -10,7 +10,9 @@ expression: "Hello,{% for item in list %} to {{ item }} and {% endfor %} everyon
     ),
     For(
         "item",
-        None,
+        Some(
+            "Item",
+        ),
         "list",
         [
             Text(

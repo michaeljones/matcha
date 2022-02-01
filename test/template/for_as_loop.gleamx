@@ -1,0 +1,3 @@
+{> import my_user.{NamedUser}
+{> with users as List(NamedUser)
+Hello,{% for user as NamedUser in users %} to {{ user.name }} and{% endfor %} everyone else
