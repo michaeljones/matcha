@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
 - Added support for 'for .. as .. in ..' syntax to allow associating a type with the items in the
   list being iterated.
