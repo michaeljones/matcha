@@ -412,6 +412,7 @@ type Type = String;
 enum Node {
     Text(String),
     Identifier(String),
+    Builder(String),
     If(String, Vec<Node>, Vec<Node>),
     For(String, Option<Type>, String, Vec<Node>),
     Import(String),
@@ -455,6 +456,11 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 let name = extract_identifier(tokens)?;
                 ast.push(Node::Identifier(name.clone()));
                 consume_token(tokens, Token::CloseValue)?;
+            }
+            Some((Token::OpenBuilder, _)) => {
+                let name = extract_identifier(tokens)?;
+                ast.push(Node::Builder(name.clone()));
+                consume_token(tokens, Token::CloseBuilder)?;
             }
             Some((Token::OpenStmt, _)) => {
                 if let Some((Token::Else, _)) | Some((Token::EndIf, _)) | Some((Token::EndFor, _)) =
@@ -700,6 +706,14 @@ fn render_lines(
                 iter.next();
                 builder_lines.push_str(&format!(
                     "    let builder = string_builder.append(builder, {})\n",
+                    name
+                ));
+                params.push(name.clone());
+            }
+            Some(Node::Builder(name)) => {
+                iter.next();
+                builder_lines.push_str(&format!(
+                    "    let builder = string_builder.append_builder(builder, {})\n",
                     name
                 ));
                 params.push(name.clone());
@@ -1182,6 +1196,11 @@ mod test {
         assert_parse!("{> with user as User\n{{ user }}");
     }
 
+    #[test]
+    fn test_parse_builder_block() {
+        assert_parse!("Hello {[ name ]}, good to meet you");
+    }
+
     // Render
 
     #[test]
@@ -1272,6 +1291,11 @@ mod test {
     #[test]
     fn test_render_quotes() {
         assert_render!(r#"<div class="my-class">{{ name }}</div>"#);
+    }
+
+    #[test]
+    fn test_render_builder_block() {
+        assert_render!("Hello {[ name ]}, good to meet you");
     }
 
     // Errors
