@@ -44,13 +44,27 @@ Alpha. The error messages are poor and there will be plenty of flaws and oversig
 
 The syntax is inspired by [Jinja](https://jinja.palletsprojects.com/).
 
-### Value
+### String Value
 
-You can use `{{ name }}` syntax to insert the value of name into the rendered template. The
+You can use `{{ name }}` syntax to insert the value of `name` into the rendered template. The
 function generated from the template will have a labelled argument matching the identifier used.
 
 ```jinja
 {{ name }}
+```
+
+### String Builder Value
+
+You can use `{[ name ]}` syntax to insert a string builder value into the rendered template. This
+has the advantage of using
+[string_builder.append_builder](https://hexdocs.pm/gleam_stdlib/gleam/string_builder.html#append_builder)
+in the rendered template and so it more efficient for inserting content that is already in a
+`string_builder`. This can be used to insert content from another template.
+
+The function generated from the template will have a labelled argument matching the identifier used.
+
+```jinja
+{[ name ]}
 ```
 
 ### If
