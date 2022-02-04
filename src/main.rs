@@ -37,6 +37,8 @@ enum Token {
     CloseLine,
     OpenValue,
     CloseValue,
+    OpenBuilder,
+    CloseBuilder,
     Identifier(String),
     Import,
     ImportDetails(String),
@@ -60,6 +62,8 @@ impl std::fmt::Display for Token {
             Token::CloseLine => "\n",
             Token::OpenValue => "{{",
             Token::CloseValue => "}}",
+            Token::OpenBuilder => "{[",
+            Token::CloseBuilder => "]}",
             Token::OpenStmt => "{%",
             Token::CloseStmt => "%}",
             Token::Identifier(name) => name,
@@ -147,6 +151,29 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
                     iter.next();
 
                     tokens = scan_identifiers(iter, tokens)?;
+                } else if let Some((second_index, "[")) = iter.peek() {
+                    if !buffer.is_empty() {
+                        tokens.push((
+                            Token::Text(buffer),
+                            Range {
+                                start: buffer_start_index.unwrap_or(0),
+                                end: first_index,
+                            },
+                        ));
+                        buffer = String::new();
+                    }
+
+                    tokens.push((
+                        Token::OpenBuilder,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
+
+                    iter.next();
+
+                    tokens = scan_identifiers(iter, tokens)?;
                 } else if let Some((second_index, ">")) = iter.peek() {
                     tokens.push((
                         Token::OpenLine,
@@ -195,6 +222,21 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
                     buffer.push('%');
                 }
             }
+            Some((first_index, "]")) => {
+                if let Some((second_index, "}")) = iter.peek() {
+                    tokens.push((
+                        Token::CloseBuilder,
+                        Range {
+                            start: first_index,
+                            end: *second_index,
+                        },
+                    ));
+                    buffer_start_index = None;
+                    iter.next();
+                } else {
+                    buffer.push(']');
+                }
+            }
             Some((index, grapheme)) => {
                 buffer.push_str(grapheme);
                 buffer_start_index = buffer_start_index.or(Some(index));
@@ -220,7 +262,8 @@ fn scan_identifiers(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanE
     log::trace!("scan_identifiers");
     loop {
         match iter.peek() {
-            Some((_index, "}")) | Some((_index, "%")) | Some((_index, "\n")) => {
+            Some((_index, "}")) | Some((_index, "%")) | Some((_index, "]"))
+            | Some((_index, "\n")) => {
                 break;
             }
             None => break,
@@ -245,7 +288,7 @@ fn scan_identifier_or_keyword(iter: &mut Iter) -> (Token, Range) {
     loop {
         match iter.peek() {
             Some((_index, "}")) | Some((_index, " ")) | Some((_index, "\n"))
-            | Some((_index, "%")) => {
+            | Some((_index, "%")) | Some((_index, "]")) => {
                 break;
             }
             Some((index, grapheme)) => {
@@ -369,6 +412,7 @@ type Type = String;
 enum Node {
     Text(String),
     Identifier(String),
+    Builder(String),
     If(String, Vec<Node>, Vec<Node>),
     For(String, Option<Type>, String, Vec<Node>),
     Import(String),
@@ -412,6 +456,11 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 let name = extract_identifier(tokens)?;
                 ast.push(Node::Identifier(name.clone()));
                 consume_token(tokens, Token::CloseValue)?;
+            }
+            Some((Token::OpenBuilder, _)) => {
+                let name = extract_identifier(tokens)?;
+                ast.push(Node::Builder(name.clone()));
+                consume_token(tokens, Token::CloseBuilder)?;
             }
             Some((Token::OpenStmt, _)) => {
                 if let Some((Token::Else, _)) | Some((Token::EndIf, _)) | Some((Token::EndFor, _)) =
@@ -657,6 +706,14 @@ fn render_lines(
                 iter.next();
                 builder_lines.push_str(&format!(
                     "    let builder = string_builder.append(builder, {})\n",
+                    name
+                ));
+                params.push(name.clone());
+            }
+            Some(Node::Builder(name)) => {
+                iter.next();
+                builder_lines.push_str(&format!(
+                    "    let builder = string_builder.append_builder(builder, {})\n",
                     name
                 ));
                 params.push(name.clone());
@@ -1063,6 +1120,11 @@ mod test {
         assert_scan!("{> with user as User\n{{ user }}");
     }
 
+    #[test]
+    fn test_scan_builder_block() {
+        assert_scan!("Hello {[ builder ]}, good to meet you");
+    }
+
     // Parse
 
     #[test]
@@ -1132,6 +1194,11 @@ mod test {
     #[test]
     fn test_parse_with() {
         assert_parse!("{> with user as User\n{{ user }}");
+    }
+
+    #[test]
+    fn test_parse_builder_block() {
+        assert_parse!("Hello {[ name ]}, good to meet you");
     }
 
     // Render
@@ -1224,6 +1291,11 @@ mod test {
     #[test]
     fn test_render_quotes() {
         assert_render!(r#"<div class="my-class">{{ name }}</div>"#);
+    }
+
+    #[test]
+    fn test_render_builder_block() {
+        assert_render!("Hello {[ name ]}, good to meet you");
     }
 
     // Errors

@@ -1,3 +1,5 @@
+import gleam/string_builder
+
 import gleeunit
 import gleeunit/should
 
@@ -14,6 +16,7 @@ import template/multiline
 import template/value_in_for_loop
 import template/value_in_if_else
 import template/quote
+import template/builder
 
 import my_user.{User, NamedUser}
 
@@ -40,6 +43,12 @@ pub fn two_identifiers_test() {
 pub fn double_identifier_usage_test() {
   double_identifier_usage.render("Double")
   |> should.equal("Double usage, Double usage\n")
+}
+
+pub fn builder_block_test() {
+  let name_builder = string_builder.from_strings(["Anna", " ", "Bandana"])
+  builder.render(name_builder)
+  |> should.equal("Hello Anna Bandana, good to meet you\n")
 }
 
 pub fn if_statement_test() {

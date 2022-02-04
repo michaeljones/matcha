@@ -1,9 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Added support for '{[ name ]}' syntax to allow for inserting string builder values into the
+  template using the underlying `append_builder` call instead of the `append` functon that we use
+  for strings.
+
+  Thank you to @michallepicki for the suggestion.
+
 ## 0.6.0
 
 - Added support for 'for .. as .. in ..' syntax to allow associating a type with the items in the
   list being iterated.
+
+  Thank you to @lpil for the suggestion.
 
 ## 0.5.0
 
