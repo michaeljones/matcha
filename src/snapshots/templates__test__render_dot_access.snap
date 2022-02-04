@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 761
-expression: "Hello{% if user.is_admin %} Admin{% endif %}"
+assertion_line: 1248
+expression: "{> with user as MyUser\nHello{% if user.is_admin %} Admin{% endif %}"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -9,7 +9,7 @@ import gleam/list
 
 
 
-pub fn render_builder(user user) -> StringBuilder {
+pub fn render_builder(user user: MyUser) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello")
     let builder = case user.is_admin {
@@ -27,7 +27,7 @@ pub fn render_builder(user user) -> StringBuilder {
     builder
 }
 
-pub fn render(user user) -> String {
+pub fn render(user user: MyUser) -> String {
     string_builder.to_string(render_builder(user: user))
 }
 

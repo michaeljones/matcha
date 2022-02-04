@@ -1,6 +1,4 @@
-use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
-use std::hash::Hash;
 
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::SimpleFiles;
@@ -18,13 +16,6 @@ pub struct Source {
 
 pub type Range = std::ops::Range<usize>;
 pub type Position = usize;
-
-// From: https://stackoverflow.com/a/47648303/98555
-fn dedup<T: Eq + Hash + Clone>(v: &mut Vec<T>) {
-    // note the Copy constraint
-    let mut uniques = HashSet::new();
-    v.retain(|e| uniques.insert(e.clone()));
-}
 
 // Scanning
 
@@ -416,7 +407,7 @@ enum Node {
     If(String, Vec<Node>, Vec<Node>),
     For(String, Option<Type>, String, Vec<Node>),
     Import(String),
-    With(String, Type),
+    With((String, Range), Type),
 }
 
 #[derive(Debug)]
@@ -453,12 +444,12 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 ast.push(Node::Text(text.clone()));
             }
             Some((Token::OpenValue, _)) => {
-                let name = extract_identifier(tokens)?;
+                let (name, _) = extract_identifier(tokens)?;
                 ast.push(Node::Identifier(name.clone()));
                 consume_token(tokens, Token::CloseValue)?;
             }
             Some((Token::OpenBuilder, _)) => {
-                let name = extract_identifier(tokens)?;
+                let (name, _) = extract_identifier(tokens)?;
                 ast.push(Node::Builder(name.clone()));
                 consume_token(tokens, Token::CloseBuilder)?;
             }
@@ -491,10 +482,10 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                         ast.push(Node::Import(import_details))
                     }
                     Some((Token::With, _)) => {
-                        let identifier = extract_identifier(tokens)?;
+                        let (identifier, range) = extract_identifier(tokens)?;
                         consume_token(tokens, Token::As)?;
-                        let type_ = extract_identifier(tokens)?;
-                        ast.push(Node::With(identifier, type_))
+                        let (type_, _) = extract_identifier(tokens)?;
+                        ast.push(Node::With((identifier, range), type_))
                     }
                     _ => {}
                 }
@@ -518,7 +509,7 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
 
 fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     log::trace!("parse_if_statement");
-    let name = extract_identifier(tokens)?;
+    let (name, _) = extract_identifier(tokens)?;
     consume_token(tokens, Token::CloseStmt)?;
 
     let if_nodes = parse_inner(tokens, true)?;
@@ -551,10 +542,10 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 }
 
 fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
-    let entry_identifier = extract_identifier(tokens)?;
+    let (entry_identifier, _) = extract_identifier(tokens)?;
     let entry_type = match tokens.next() {
         Some((Token::As, _)) => {
-            let type_identifier = extract_identifier(tokens)?;
+            let (type_identifier, _) = extract_identifier(tokens)?;
             consume_token(tokens, Token::In)?;
             Some(type_identifier)
         }
@@ -569,7 +560,7 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
         None => return Err(ParserError::UnexpectedEnd),
     };
 
-    let list_identifier = extract_identifier(tokens)?;
+    let (list_identifier, _) = extract_identifier(tokens)?;
     consume_token(tokens, Token::CloseStmt)?;
 
     let loop_nodes = parse_inner(tokens, true)?;
@@ -585,10 +576,10 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     ))
 }
 
-fn extract_identifier(tokens: &mut TokenIter) -> Result<String, ParserError> {
+fn extract_identifier(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
-        Some((Token::Identifier(name), _)) => Ok(name.clone()),
+        Some((Token::Identifier(name), range)) => Ok((name.clone(), range.clone())),
         Some((token, range)) => Err(ParserError::UnexpectedToken(
             token.clone(),
             range.clone(),
@@ -628,8 +619,13 @@ fn consume_token(tokens: &mut TokenIter, expected_token: Token) -> Result<(), Pa
 
 type NodeIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Node>>;
 
-fn render(iter: &mut NodeIter) -> String {
-    let (builder_lines, params, imports, type_lookup) = render_lines(iter);
+#[derive(Debug)]
+enum RenderError {
+    DuplicateParamName(String, Range),
+}
+
+fn render(iter: &mut NodeIter) -> Result<String, RenderError> {
+    let (builder_lines, imports, typed_params) = render_lines(iter)?;
 
     let import_lines = imports
         .iter()
@@ -637,29 +633,15 @@ fn render(iter: &mut NodeIter) -> String {
         .collect::<Vec<_>>()
         .join("\n");
 
-    let mut params = params
+    let params_string = typed_params
         .iter()
-        .flat_map(|value| value.split('.').next())
-        .collect::<Vec<_>>();
-
-    dedup(&mut params);
-
-    let params_string = params
-        .iter()
-        .map(|value| match type_lookup.get(*value) {
-            Some(type_) => {
-                format!("{} {}: {}", value, value, type_)
-            }
-            None => {
-                format!("{} {}", value, value)
-            }
-        })
+        .map(|(param_name, type_name)| format!("{} {}: {}", param_name, param_name, type_name))
         .collect::<Vec<_>>()
         .join(", ");
 
-    let args_string = params
+    let args_string = typed_params
         .iter()
-        .map(|value| format!("{}: {}", value, value))
+        .map(|(param_name, _)| format!("{}: {}", param_name, param_name))
         .collect::<Vec<_>>()
         .join(", ");
 
@@ -682,16 +664,19 @@ pub fn render({}) -> String {{
         import_lines, params_string, builder_lines, params_string, args_string
     );
 
-    output
+    Ok(output)
 }
 
 fn render_lines(
     iter: &mut NodeIter,
-) -> (String, Vec<String>, Vec<String>, HashMap<String, String>) {
+) -> Result<(String, Vec<String>, Vec<(String, String)>), RenderError> {
     let mut builder_lines = String::new();
-    let mut params = vec![];
     let mut imports = vec![];
-    let mut type_lookup = HashMap::new();
+
+    // Use a Vec<(String, String)> instead of a HashMap to maintain order which gives the users
+    // some control, though parameters are labelled and can be called in any order. Some kind of
+    // order is required to keep the tests passing as it seems to be non-determinate in a HashMap
+    let mut typed_params = Vec::new();
 
     loop {
         match iter.peek() {
@@ -708,7 +693,6 @@ fn render_lines(
                     "    let builder = string_builder.append(builder, {})\n",
                     name
                 ));
-                params.push(name.clone());
             }
             Some(Node::Builder(name)) => {
                 iter.next();
@@ -716,21 +700,27 @@ fn render_lines(
                     "    let builder = string_builder.append_builder(builder, {})\n",
                     name
                 ));
-                params.push(name.clone());
             }
             Some(Node::Import(import_details)) => {
                 iter.next();
                 imports.push(import_details.clone());
             }
-            Some(Node::With(identifier, type_)) => {
+            Some(Node::With((identifier, range), type_)) => {
                 iter.next();
-                type_lookup.insert(identifier.clone(), type_.clone());
+
+                if typed_params.iter().any(|(name, _)| name == identifier) {
+                    return Err(RenderError::DuplicateParamName(
+                        identifier.clone(),
+                        range.clone(),
+                    ));
+                }
+
+                typed_params.push((identifier.clone(), type_.clone()));
             }
             Some(Node::If(identifier_name, if_nodes, else_nodes)) => {
                 iter.next();
-                let (if_lines, mut if_params, _, _) = render_lines(&mut if_nodes.iter().peekable());
-                let (else_lines, mut else_params, _, _) =
-                    render_lines(&mut else_nodes.iter().peekable());
+                let (if_lines, _, _) = render_lines(&mut if_nodes.iter().peekable())?;
+                let (else_lines, _, _) = render_lines(&mut else_nodes.iter().peekable())?;
                 builder_lines.push_str(&format!(
                     r#"    let builder = case {} {{
         True -> {{
@@ -745,9 +735,6 @@ fn render_lines(
 "#,
                     identifier_name, if_lines, else_lines
                 ));
-                params.push(identifier_name.clone());
-                params.append(&mut if_params);
-                params.append(&mut else_params);
             }
             Some(Node::For(entry_identifier, entry_type, list_identifier, loop_nodes)) => {
                 iter.next();
@@ -757,8 +744,7 @@ fn render_lines(
                     .map(|value| format!(": {}", value))
                     .unwrap_or("".to_string());
 
-                let (loop_lines, mut loop_params, _, _) =
-                    render_lines(&mut loop_nodes.iter().peekable());
+                let (loop_lines, _, _) = render_lines(&mut loop_nodes.iter().peekable())?;
                 builder_lines.push_str(&format!(
                     r#"    let builder = list.fold({}, builder, fn(builder, {}{}) {{
         {}
@@ -767,19 +753,12 @@ fn render_lines(
 "#,
                     list_identifier, entry_identifier, entry_type, loop_lines
                 ));
-                params.push(list_identifier.clone());
-
-                // Remove the for-loop identifier which will have been detected as a 'param'
-                // We split any discovered identifiers on '.' and compare the first part so that if
-                // the entry_identifier is 'user' and we find 'user.name' we still rule it out
-                loop_params.retain(|value| value.split(".").next() != Some(entry_identifier));
-                params.append(&mut loop_params);
             }
             None => break,
         }
     }
 
-    (builder_lines, params, imports, type_lookup)
+    Ok((builder_lines, imports, typed_params))
 }
 
 #[derive(Debug)]
@@ -787,6 +766,7 @@ enum Error {
     IO(std::io::Error, std::path::PathBuf),
     Scan(ScanError, Source),
     Parse(ParserError, Source),
+    Render(RenderError, Source),
 }
 
 fn write_error<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
@@ -875,6 +855,17 @@ fn write_error<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
                 let _ = write!(writer, "Unexpected end");
             }
         },
+        Error::Render(error, source) => match error {
+            RenderError::DuplicateParamName(name, range) => explain_with_source(
+                writer,
+                &format!(
+                    "This is declared in more than one 'with' statement: {}",
+                    name
+                ),
+                source,
+                range,
+            ),
+        },
     }
 }
 
@@ -918,8 +909,11 @@ fn convert(filepath: &std::path::Path) {
                     parse(&mut tokens.iter().peekable())
                         .map_err(|error| Error::Parse(error, source.clone()))
                 })
+                .and_then(|ast| {
+                    render(&mut ast.iter().peekable())
+                        .map_err(|error| Error::Render(error, source.clone()))
+                })
         })
-        .map(|ast| render(&mut ast.iter().peekable()))
         .and_then(|output| {
             let out_file_path = filepath.with_extension("gleam");
             std::fs::write(&out_file_path, output)
@@ -989,7 +983,7 @@ mod test {
             .to_string()
     }
 
-    fn debug_format_result<T: Debug, E: Debug>(result: Result<T, E>) -> String {
+    fn format_debug_result<T: Debug, E: Debug>(result: Result<T, E>) -> String {
         match result {
             Ok(value) => format!("{:#?}", value),
             Err(err) => format!("{:#?}", err),
@@ -1009,7 +1003,7 @@ mod test {
             let _ = env_logger::try_init();
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                debug_format_result(scan($text)),
+                format_debug_result(scan($text)),
                 $text
             );
         }};
@@ -1031,7 +1025,7 @@ mod test {
                 });
             insta::assert_snapshot!(
                 insta::internals::AutoName,
-                debug_format_result(result),
+                format_debug_result(result),
                 $text
             );
         }};
@@ -1051,7 +1045,10 @@ mod test {
                     parse(&mut tokens.iter().peekable())
                         .map_err(|err| Error::Parse(err, source.clone()))
                 })
-                .map(|ast| render(&mut ast.iter().peekable()));
+                .and_then(|ast| {
+                    render(&mut ast.iter().peekable())
+                        .map_err(|err| Error::Render(err, source.clone()))
+                });
             insta::assert_snapshot!(insta::internals::AutoName, format_result(result), $text);
         }};
     }
@@ -1210,61 +1207,89 @@ mod test {
 
     #[test]
     fn test_render_identifier() {
-        assert_render!("Hello {{ name }}, good to meet you");
+        assert_render!(
+            "{> with name as String
+Hello {{ name }}, good to meet you"
+        );
     }
 
     #[test]
     fn test_render_two_identifiers() {
-        assert_render!("Hello {{ name }}, {{ adjective }} to meet you");
+        assert_render!(
+            "{> with name as String
+{> with adjective as String
+Hello {{ name }}, {{ adjective }} to meet you"
+        );
     }
 
     #[test]
     fn test_repeated_identifier_usage() {
-        assert_render!("{{ name }} usage, {{ name }} usage");
+        assert_render!(
+            "{> with name as String
+{{ name }} usage, {{ name }} usage"
+        );
     }
 
     #[test]
     fn test_render_if_statement() {
-        assert_render!("Hello {% if is_user %}User{% endif %}");
+        assert_render!(
+            "{> with is_user as Bool
+Hello {% if is_user %}User{% endif %}"
+        );
     }
 
     #[test]
     fn test_render_empty_if_statement() {
-        assert_render!("Hello {% if is_user %}{% endif %}");
+        assert_render!(
+            "{> with is_user as Bool
+Hello {% if is_user %}{% endif %}"
+        );
     }
 
     #[test]
     fn test_render_if_else_statement() {
-        assert_render!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
+        assert_render!(
+            "{> with is_user as Bool
+Hello {% if is_user %}User{% else %}Unknown{% endif %}"
+        );
     }
 
     #[test]
     fn test_render_nested_if_statements() {
         assert_render!(
-            "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
+            "{> with is_user as Bool
+{> with is_admin as Bool
+Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
         );
     }
 
     #[test]
     fn test_render_for_loop() {
-        assert_render!("Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else");
+        assert_render!(
+            "{> with list as List(String)
+Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
+        );
     }
 
     #[test]
     fn test_render_for_as_loop() {
         assert_render!(
-            "Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
+            "{> with list as List(Item)
+Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
         );
     }
 
     #[test]
     fn test_render_dot_access() {
-        assert_render!("Hello{% if user.is_admin %} Admin{% endif %}");
+        assert_render!(
+            "{> with user as MyUser
+Hello{% if user.is_admin %} Admin{% endif %}"
+        );
     }
 
     #[test]
     fn test_render_import() {
-        assert_render!("{> import user.{User}\n{{ name }}");
+        assert_render!("{> import user.{User}\n{> with name as String\n{{ name }}");
     }
 
     #[test]
@@ -1280,7 +1305,8 @@ mod test {
     #[test]
     fn test_render_multiline() {
         assert_render!(
-            r#"<ul>
+            r#"{> with my_list as List(String)
+<ul>
 {% for entry in my_list %}
     <li>{{ entry }}</li>
 {% endfor %}
@@ -1290,12 +1316,18 @@ mod test {
 
     #[test]
     fn test_render_quotes() {
-        assert_render!(r#"<div class="my-class">{{ name }}</div>"#);
+        assert_render!(
+            r#"{> with name as String
+<div class="my-class">{{ name }}</div>"#
+        );
     }
 
     #[test]
     fn test_render_builder_block() {
-        assert_render!("Hello {[ name ]}, good to meet you");
+        assert_render!(
+            "{> with name as StringBuilder
+Hello {[ name ]}, good to meet you"
+        );
     }
 
     // Errors
@@ -1313,5 +1345,23 @@ mod test {
     #[test]
     fn test_error_unexpected_endif() {
         assert_render!(r#"Hello {% endif %}"#);
+    }
+
+    #[test]
+    fn test_error_duplicate_with() {
+        assert_render!(
+            r#"{> with name as String
+{> with name as String
+Hello"#
+        );
+    }
+
+    #[test]
+    fn test_error_duplicate_with_name() {
+        assert_render!(
+            r#"{> with name as String
+{> with name as String
+Hello"#
+        );
     }
 }

@@ -1,12 +1,15 @@
 ---
 source: src/main.rs
-assertion_line: 767
+assertion_line: 1189
 expression: "{> with user as User\n{{ user }}"
 
 ---
 [
     With(
-        "user",
+        (
+            "user",
+            8..12,
+        ),
         "User",
     ),
     Identifier(

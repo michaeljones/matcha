@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 744
-expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
+assertion_line: 1215
+expression: "{> with is_user as Bool\nHello {% if is_user %}User{% else %}Unknown{% endif %}"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -9,7 +9,7 @@ import gleam/list
 
 
 
-pub fn render_builder(is_user is_user) -> StringBuilder {
+pub fn render_builder(is_user is_user: Bool) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello ")
     let builder = case is_user {
@@ -28,7 +28,7 @@ pub fn render_builder(is_user is_user) -> StringBuilder {
     builder
 }
 
-pub fn render(is_user is_user) -> String {
+pub fn render(is_user is_user: Bool) -> String {
     string_builder.to_string(render_builder(is_user: is_user))
 }
 

@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 756
-expression: "Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
+assertion_line: 1232
+expression: "{> with list as List(String)\nHello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -9,7 +9,7 @@ import gleam/list
 
 
 
-pub fn render_builder(list list) -> StringBuilder {
+pub fn render_builder(list list: List(String)) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello,")
     let builder = list.fold(list, builder, fn(builder, item) {
@@ -24,7 +24,7 @@ pub fn render_builder(list list) -> StringBuilder {
     builder
 }
 
-pub fn render(list list) -> String {
+pub fn render(list list: List(String)) -> String {
     string_builder.to_string(render_builder(list: list))
 }
 
