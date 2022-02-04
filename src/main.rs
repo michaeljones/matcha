@@ -609,7 +609,7 @@ fn consume_token(tokens: &mut TokenIter, expected_token: Token) -> Result<(), Pa
         Some((matched_token, range)) => Err(ParserError::UnexpectedToken(
             matched_token.clone(),
             range.clone(),
-            vec![expected_token.clone()],
+            vec![expected_token],
         )),
         None => Err(ParserError::UnexpectedEnd),
     }
@@ -667,9 +667,9 @@ pub fn render({}) -> String {{
     Ok(output)
 }
 
-fn render_lines(
-    iter: &mut NodeIter,
-) -> Result<(String, Vec<String>, Vec<(String, String)>), RenderError> {
+type RenderDetails = (String, Vec<String>, Vec<(String, String)>);
+
+fn render_lines(iter: &mut NodeIter) -> Result<RenderDetails, RenderError> {
     let mut builder_lines = String::new();
     let mut imports = vec![];
 
@@ -742,7 +742,7 @@ fn render_lines(
                 let entry_type = entry_type
                     .as_ref()
                     .map(|value| format!(": {}", value))
-                    .unwrap_or("".to_string());
+                    .unwrap_or_else(|| "".to_string());
 
                 let (loop_lines, _, _) = render_lines(&mut loop_nodes.iter().peekable())?;
                 builder_lines.push_str(&format!(
