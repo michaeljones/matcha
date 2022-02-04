@@ -1,1 +1,3 @@
+{> with is_user as Bool
+{> with greeting as String
 {% if is_user %}{{ greeting }} User{% else %}{{ greeting }} Unknown{% endif %}

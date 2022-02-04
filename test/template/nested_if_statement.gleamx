@@ -1,1 +1,3 @@
+{> with is_user as Bool
+{> with is_admin as Bool
 Hello{% if is_user %} {% if is_admin %}Admin{% else %}User{% endif %}{% endif %}

@@ -1,1 +1,3 @@
+{> with name as String
+{> with adjective as String
 Hello {{ name }}, {{ adjective }} to meet you

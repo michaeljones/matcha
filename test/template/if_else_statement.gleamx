@@ -1,1 +1,2 @@
+{> with is_user as Bool
 Hello {% if is_user %}User{% else %}Unknown{% endif %}

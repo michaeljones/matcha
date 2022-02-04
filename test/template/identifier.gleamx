@@ -1,1 +1,2 @@
+{> with name as String
 Hello {{ name }}, good to meet you

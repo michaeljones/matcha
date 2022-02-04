@@ -1,3 +1,5 @@
+{> with my_list as List(String)
+{> with greeting as String
 <h1>My List</h1>
 <ul>
 {% for entry in my_list %}
