@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
 
 - Breaking change: all parameters to the template must now be declared using the `{> with ... as
   ...` syntax. The template generation will no longer try to automatically deduce parameters from
