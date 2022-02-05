@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
 - Added support for '{[ name ]}' syntax to allow for inserting string builder values into the
   template using the underlying `append_builder` call instead of the `append` functon that we use
