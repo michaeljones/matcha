@@ -38,19 +38,32 @@ invalid modules and so the Gleam compiler will pick up further errors.
 
 ## Status
 
-Alpha. The error messages are poor and there will be plenty of flaws and oversights.
+Beta. The project has had some attention and the test coverage is good.
 
 ## Syntax
 
 The syntax is inspired by [Jinja](https://jinja.palletsprojects.com/).
 
+### With
+
+You can use `{>` syntax to add `with` statements to declare parameters and their assoicated types
+for the template and the generated render function. All parameters must be declared with `with`
+statements.
+
+```
+{> with greeting as String
+{> with name as String
+
+{{ greeting }}, {{ name }}
+```
+
 ### String Value
 
-You can use `{{ name }}` syntax to insert the value of `name` into the rendered template. The
-function generated from the template will have a labelled argument matching the identifier used.
+You can use `{{ name }}` syntax to insert the value of `name` into the rendered template.
 
 ```jinja
-{{ name }}
+{> with name as String
+Hello {{ name }}
 ```
 
 ### String Builder Value
@@ -59,11 +72,10 @@ You can use `{[ name ]}` syntax to insert a string builder value into the render
 has the advantage of using
 [string_builder.append_builder](https://hexdocs.pm/gleam_stdlib/gleam/string_builder.html#append_builder)
 in the rendered template and so it more efficient for inserting content that is already in a
-`string_builder`. This can be used to insert content from another template.
-
-The function generated from the template will have a labelled argument matching the identifier used.
+`StringBuilder`. This can be used to insert content from another template.
 
 ```jinja
+{> with name as StringBuilder
 {[ name ]}
 ```
 
@@ -76,6 +88,7 @@ after `if`.
 The `else` is optional.
 
 ```jinja
+{> with is_admin as Bool
 {% if is_admin %}Admin{% else %}User{% endif %}
 ```
 
@@ -86,6 +99,7 @@ function generated from the template will have a labelled argument matching the 
 after `in`.
 
 ```html+jinja
+{> with list as List(String)
 <ul>
 {% for entry in list %}
     <li>{{ entry }}</li>
@@ -97,9 +111,11 @@ Additionally you can use the `as` keyword to associate a type with the items bei
 This is necessary if you're using a complex object.
 
 ```html+jinja
-{> import my_user.{MyUser}
+{> import organisation.{Organisation}
+{> import membership.{Member}
+{> with org as Organisation
 <ul>
-{% for user as MyUser in users %}
+{% for user as Member in organisation.members %}
     <li>{{ user.name }}</li>
 {% endfor %}
 </ul>
@@ -112,21 +128,6 @@ to use with the `with` syntax below to help Gleam check variables used in the te
 
 ```
 {> import my_user.{MyUser}
-```
-
-### With
-
-You can use `{>` syntax to add `with` statements with associate types with variables in the
-template. The type is used for the corresponding argument in the function generated from the
-template. The Gleam compiler can infer simple types like booleans and strings but needs type
-annotations for more complex structures like a custom types.
-
-```
-{> import my_user.{MyUser}
-
-{> with user_record as MyUser
-
-{{ user_record.name }}
 ```
 
 ## Output
