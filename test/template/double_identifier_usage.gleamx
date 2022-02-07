@@ -1,1 +1,2 @@
+{> with name as String
 {{ name }} usage, {{ name }} usage

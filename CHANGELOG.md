@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Breaking change: all parameters to the template must now be declared using the `{> with ... as
+  ...` syntax. The template generation will no longer try to automatically deduce parameters from
+  the template contents. Being explicit allows us to include static content from imported modules
+  without the generation getting confused about what is a parameter and what is an import.
+
 ## 0.7.0
 
 - Added support for '{[ name ]}' syntax to allow for inserting string builder values into the

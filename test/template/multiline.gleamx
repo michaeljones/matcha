@@ -1,3 +1,4 @@
+{> with my_list as List(String)
 <h1>My List</h1>
 <ul>
 {% for entry in my_list %}

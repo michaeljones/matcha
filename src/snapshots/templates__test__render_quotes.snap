@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 856
-expression: "<div class=\"my-class\">{{ name }}</div>"
+assertion_line: 1283
+expression: "{> with name as String\n<div class=\"my-class\">{{ name }}</div>"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -9,7 +9,7 @@ import gleam/list
 
 
 
-pub fn render_builder(name name) -> StringBuilder {
+pub fn render_builder(name name: String) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "<div class=\"my-class\">")
     let builder = string_builder.append(builder, name)
@@ -18,7 +18,7 @@ pub fn render_builder(name name) -> StringBuilder {
     builder
 }
 
-pub fn render(name name) -> String {
+pub fn render(name name: String) -> String {
     string_builder.to_string(render_builder(name: name))
 }
 

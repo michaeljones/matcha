@@ -1,1 +1,2 @@
+{> with list as List(String)
 Hello,{% for item in list %} to {{ item }} and{% endfor %} everyone else

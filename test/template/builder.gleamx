@@ -1,1 +1,2 @@
+{> with name_builder as StringBuilder
 Hello {[ name_builder ]}, good to meet you

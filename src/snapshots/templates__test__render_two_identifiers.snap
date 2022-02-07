@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 724
-expression: "Hello {{ name }}, {{ adjective }} to meet you"
+assertion_line: 1205
+expression: "{> with name as String\n{> with adjective as String\nHello {{ name }}, {{ adjective }} to meet you"
 
 ---
 import gleam/string_builder.{StringBuilder}
@@ -9,7 +9,7 @@ import gleam/list
 
 
 
-pub fn render_builder(name name, adjective adjective) -> StringBuilder {
+pub fn render_builder(name name: String, adjective adjective: String) -> StringBuilder {
     let builder = string_builder.from_string("")
     let builder = string_builder.append(builder, "Hello ")
     let builder = string_builder.append(builder, name)
@@ -20,7 +20,7 @@ pub fn render_builder(name name, adjective adjective) -> StringBuilder {
     builder
 }
 
-pub fn render(name name, adjective adjective) -> String {
+pub fn render(name name: String, adjective adjective: String) -> String {
     string_builder.to_string(render_builder(name: name, adjective: adjective))
 }
 
