@@ -1,0 +1,15 @@
+---
+source: src/error.rs
+assertion_line: 215
+expression: "{> with name as String\n{> with name as String\nHello"
+
+---
+This is declared in more than one 'with' statement: name
+
+error: 
+  ┌─ -test-:2:9
+  │
+2 │ {> with name as String
+  │         ^^^^
+
+

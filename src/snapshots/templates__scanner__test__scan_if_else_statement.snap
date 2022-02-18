@@ -1,0 +1,68 @@
+---
+source: src/scanner.rs
+assertion_line: 434
+expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
+
+---
+[
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
+    ),
+    (
+        OpenStmt,
+        6..7,
+    ),
+    (
+        If,
+        9..11,
+    ),
+    (
+        Identifier(
+            "is_user",
+        ),
+        12..19,
+    ),
+    (
+        CloseStmt,
+        20..21,
+    ),
+    (
+        Text(
+            "User",
+        ),
+        22..26,
+    ),
+    (
+        OpenStmt,
+        26..27,
+    ),
+    (
+        Else,
+        29..33,
+    ),
+    (
+        CloseStmt,
+        34..35,
+    ),
+    (
+        Text(
+            "Unknown",
+        ),
+        36..43,
+    ),
+    (
+        OpenStmt,
+        43..44,
+    ),
+    (
+        EndIf,
+        46..51,
+    ),
+    (
+        CloseStmt,
+        52..53,
+    ),
+]

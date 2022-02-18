@@ -1,0 +1,34 @@
+---
+source: src/scanner.rs
+assertion_line: 414
+expression: "Hello {{ name }}, good to meet you"
+
+---
+[
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
+    ),
+    (
+        OpenValue,
+        6..7,
+    ),
+    (
+        Identifier(
+            "name",
+        ),
+        9..13,
+    ),
+    (
+        CloseValue,
+        14..15,
+    ),
+    (
+        Text(
+            ", good to meet you",
+        ),
+        16..33,
+    ),
+]

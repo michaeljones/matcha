@@ -1,0 +1,15 @@
+---
+source: src/error.rs
+assertion_line: 205
+expression: "Hello {% in %}"
+
+---
+Unexpected keyword: in. Expected one of: if, for
+
+error: 
+  ┌─ -test-:1:10
+  │
+1 │ Hello {% in %}
+  │          ^^
+
+
