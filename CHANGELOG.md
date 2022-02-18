@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+- Use non-zero exit code for process if any error is encountered. Basic behaviour that was missing.
+
+  Thank you to @lpil for the suggestion.
+
 ## 0.8.0
 
 - Breaking change: all parameters to the template must now be declared using the `{> with ... as
