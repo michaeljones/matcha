@@ -11,7 +11,7 @@ mod scanner;
 
 use error::{Error, Source};
 
-fn convert(filepath: &std::path::Path) {
+fn convert(filepath: &std::path::Path) -> Result<(), ()> {
     let result = std::fs::read_to_string(filepath)
         .map_err(|err| Error::IO(err, filepath.to_path_buf()))
         .and_then(|contents| {
@@ -37,12 +37,13 @@ fn convert(filepath: &std::path::Path) {
         });
 
     match result {
-        Ok(()) => {}
+        Ok(()) => Ok(()),
         Err(error) => {
             let mut writer = StandardStream::stderr(color_choice());
             error::write(&mut writer, error);
+            Err(())
         }
-    };
+    }
 }
 
 fn color_choice() -> ColorChoice {
@@ -72,14 +73,27 @@ fn main() {
         return;
     }
 
-    for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
+    let result = WalkDir::new(".")
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter_map(|entry| {
+            let path = entry.path();
 
-        if path.extension() == Some(std::ffi::OsStr::new("gleamx")) {
-            if opt.verbose {
-                println!("Converting {}", path.display());
+            if path.extension() == Some(std::ffi::OsStr::new("gleamx")) {
+                if opt.verbose {
+                    println!("Converting {}", path.display());
+                }
+                Some(convert(&path.to_path_buf()))
+            } else {
+                None
             }
-            convert(&path.to_path_buf());
+        })
+        .collect::<Result<Vec<_>, _>>();
+
+    match result {
+        Ok(_) => {}
+        Err(()) => {
+            std::process::exit(1);
         }
     }
 }
