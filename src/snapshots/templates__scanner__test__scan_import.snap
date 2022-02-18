@@ -1,6 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 876
+source: src/scanner.rs
+assertion_line: 461
 expression: "{> import user.{User}\n{{ name }}"
 
 ---

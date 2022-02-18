@@ -1,7 +1,7 @@
 ---
-source: src/main.rs
-assertion_line: 835
-expression: "Hello {{ name }}, good to meet you"
+source: src/scanner.rs
+assertion_line: 471
+expression: "Hello {[ builder ]}, good to meet you"
 
 ---
 [
@@ -12,23 +12,23 @@ expression: "Hello {{ name }}, good to meet you"
         0..6,
     ),
     (
-        OpenValue,
+        OpenBuilder,
         6..7,
     ),
     (
         Identifier(
-            "name",
+            "builder",
         ),
-        9..13,
+        9..16,
     ),
     (
-        CloseValue,
-        14..15,
+        CloseBuilder,
+        17..18,
     ),
     (
         Text(
             ", good to meet you",
         ),
-        16..33,
+        19..36,
     ),
 ]

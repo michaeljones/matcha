@@ -1,6 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 881
+source: src/scanner.rs
+assertion_line: 466
 expression: "{> with user as User\n{{ user }}"
 
 ---

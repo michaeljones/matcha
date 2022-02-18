@@ -1,6 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 815
+source: src/scanner.rs
+assertion_line: 409
 expression: "Hello name, good to meet you"
 
 ---

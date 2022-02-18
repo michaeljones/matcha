@@ -1,7 +1,7 @@
 ---
-source: src/main.rs
-assertion_line: 849
-expression: "Hello {% if is_user %}User{% endif %}"
+source: src/scanner.rs
+assertion_line: 434
+expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
 
 ---
 [
@@ -40,11 +40,29 @@ expression: "Hello {% if is_user %}User{% endif %}"
         26..27,
     ),
     (
-        EndIf,
-        29..34,
+        Else,
+        29..33,
     ),
     (
         CloseStmt,
-        35..36,
+        34..35,
+    ),
+    (
+        Text(
+            "Unknown",
+        ),
+        36..43,
+    ),
+    (
+        OpenStmt,
+        43..44,
+    ),
+    (
+        EndIf,
+        46..51,
+    ),
+    (
+        CloseStmt,
+        52..53,
     ),
 ]

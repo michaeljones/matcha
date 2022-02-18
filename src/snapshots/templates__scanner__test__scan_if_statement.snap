@@ -1,50 +1,50 @@
 ---
-source: src/main.rs
-assertion_line: 871
-expression: "Hello{% if user.is_admin %} Admin{% endif %}"
+source: src/scanner.rs
+assertion_line: 429
+expression: "Hello {% if is_user %}User{% endif %}"
 
 ---
 [
     (
         Text(
-            "Hello",
+            "Hello ",
         ),
-        0..5,
+        0..6,
     ),
     (
         OpenStmt,
-        5..6,
+        6..7,
     ),
     (
         If,
-        8..10,
+        9..11,
     ),
     (
         Identifier(
-            "user.is_admin",
+            "is_user",
         ),
-        11..24,
+        12..19,
     ),
     (
         CloseStmt,
-        25..26,
+        20..21,
     ),
     (
         Text(
-            " Admin",
+            "User",
         ),
-        27..33,
+        22..26,
     ),
     (
         OpenStmt,
-        33..34,
+        26..27,
     ),
     (
         EndIf,
-        36..41,
+        29..34,
     ),
     (
         CloseStmt,
-        42..43,
+        35..36,
     ),
 ]

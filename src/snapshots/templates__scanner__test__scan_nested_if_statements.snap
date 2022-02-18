@@ -1,6 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 859
+source: src/scanner.rs
+assertion_line: 439
 expression: "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
 
 ---

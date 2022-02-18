@@ -1,7 +1,7 @@
 ---
-source: src/main.rs
-assertion_line: 866
-expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
+source: src/scanner.rs
+assertion_line: 451
+expression: "Hello {% for item as Item in list %}{{ item }}{% endfor %}"
 
 ---
 [
@@ -26,43 +26,53 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         13..17,
     ),
     (
-        In,
+        As,
         18..20,
+    ),
+    (
+        Identifier(
+            "Item",
+        ),
+        21..25,
+    ),
+    (
+        In,
+        26..28,
     ),
     (
         Identifier(
             "list",
         ),
-        21..25,
+        29..33,
     ),
     (
         CloseStmt,
-        26..27,
+        34..35,
     ),
     (
         OpenValue,
-        28..29,
+        36..37,
     ),
     (
         Identifier(
             "item",
         ),
-        31..35,
+        39..43,
     ),
     (
         CloseValue,
-        36..37,
+        44..45,
     ),
     (
         OpenStmt,
-        38..39,
+        46..47,
     ),
     (
         EndFor,
-        41..47,
+        49..55,
     ),
     (
         CloseStmt,
-        48..49,
+        56..57,
     ),
 ]
