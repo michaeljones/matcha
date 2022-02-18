@@ -1,0 +1,22 @@
+---
+source: src/renderer.rs
+assertion_line: 281
+expression: "{> with user as User\n{{ user }}"
+
+---
+import gleam/string_builder.{StringBuilder}
+import gleam/list
+
+
+
+pub fn render_builder(user user: User) -> StringBuilder {
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, user)
+
+    builder
+}
+
+pub fn render(user user: User) -> String {
+    string_builder.to_string(render_builder(user: user))
+}
+

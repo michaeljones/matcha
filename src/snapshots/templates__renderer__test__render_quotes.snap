@@ -1,0 +1,24 @@
+---
+source: src/renderer.rs
+assertion_line: 303
+expression: "{> with name as String\n<div class=\"my-class\">{{ name }}</div>"
+
+---
+import gleam/string_builder.{StringBuilder}
+import gleam/list
+
+
+
+pub fn render_builder(name name: String) -> StringBuilder {
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, "<div class=\"my-class\">")
+    let builder = string_builder.append(builder, name)
+    let builder = string_builder.append(builder, "</div>")
+
+    builder
+}
+
+pub fn render(name name: String) -> String {
+    string_builder.to_string(render_builder(name: name))
+}
+

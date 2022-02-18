@@ -1,0 +1,44 @@
+---
+source: src/renderer.rs
+assertion_line: 243
+expression: "{> with is_user as Bool\n{> with is_admin as Bool\nHello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif %}{% endif %}"
+
+---
+import gleam/string_builder.{StringBuilder}
+import gleam/list
+
+
+
+pub fn render_builder(is_user is_user: Bool, is_admin is_admin: Bool) -> StringBuilder {
+    let builder = string_builder.from_string("")
+    let builder = string_builder.append(builder, "Hello ")
+    let builder = case is_user {
+        True -> {
+                let builder = case is_admin {
+        True -> {
+                let builder = string_builder.append(builder, "Admin")
+
+            builder
+        }
+        False -> {
+                let builder = string_builder.append(builder, "User")
+
+            builder
+        }
+}
+
+            builder
+        }
+        False -> {
+            
+            builder
+        }
+}
+
+    builder
+}
+
+pub fn render(is_user is_user: Bool, is_admin is_admin: Bool) -> String {
+    string_builder.to_string(render_builder(is_user: is_user, is_admin: is_admin))
+}
+

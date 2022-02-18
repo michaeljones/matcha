@@ -1,0 +1,17 @@
+---
+source: src/parser.rs
+assertion_line: 273
+expression: "Hello {{ name }}, good to meet you"
+
+---
+[
+    Text(
+        "Hello ",
+    ),
+    Identifier(
+        "name",
+    ),
+    Text(
+        ", good to meet you",
+    ),
+]

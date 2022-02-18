@@ -1,0 +1,30 @@
+---
+source: src/parser.rs
+assertion_line: 305
+expression: "Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
+
+---
+[
+    Text(
+        "Hello,",
+    ),
+    For(
+        "item",
+        None,
+        "list",
+        [
+            Text(
+                " to ",
+            ),
+            Identifier(
+                "item",
+            ),
+            Text(
+                " and ",
+            ),
+        ],
+    ),
+    Text(
+        " everyone else",
+    ),
+]

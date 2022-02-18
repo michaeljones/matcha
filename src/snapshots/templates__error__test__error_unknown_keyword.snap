@@ -1,0 +1,15 @@
+---
+source: src/error.rs
+assertion_line: 200
+expression: "Hello {% wrong %}"
+
+---
+Unexpected identifier: wrong
+
+error: 
+  ┌─ -test-:1:10
+  │
+1 │ Hello {% wrong %}
+  │          ^^^^^
+
+
