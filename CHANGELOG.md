@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+
+- Add comment to generated files to indicate that they are auto-generated and ideally should not be
+  edited.
+
+  Thank you to @lpil for the suggestion.
+
 ## 0.9.0
 
 - Use non-zero exit code for process if any error is encountered. Basic behaviour that was missing.
