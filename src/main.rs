@@ -11,12 +11,18 @@ mod scanner;
 
 use error::{Error, Source};
 
-fn convert(filepath: &std::path::Path) -> Result<(), ()> {
-    let result = std::fs::read_to_string(filepath)
-        .map_err(|err| Error::IO(err, filepath.to_path_buf()))
+fn convert(prog_name: &str, file_path: &std::path::Path) -> Result<(), ()> {
+    let out_file_path = file_path.with_extension("gleam");
+    let from_file_name = file_path
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or(String::from("unknown"));
+
+    let result = std::fs::read_to_string(file_path)
+        .map_err(|err| Error::IO(err, file_path.to_path_buf()))
         .and_then(|contents| {
             let source = Source {
-                filename: filepath.to_string_lossy().into_owned(),
+                filename: file_path.to_string_lossy().into_owned(),
                 contents: contents.clone(),
             };
             scanner::scan(&contents)
@@ -26,12 +32,11 @@ fn convert(filepath: &std::path::Path) -> Result<(), ()> {
                         .map_err(|error| Error::Parse(error, source.clone()))
                 })
                 .and_then(|ast| {
-                    renderer::render(&mut ast.iter().peekable())
+                    renderer::render(&mut ast.iter().peekable(), prog_name, &from_file_name)
                         .map_err(|error| Error::Render(error, source.clone()))
                 })
         })
         .and_then(|output| {
-            let out_file_path = filepath.with_extension("gleam");
             std::fs::write(&out_file_path, output)
                 .map_err(|err| Error::IO(err, out_file_path.to_path_buf()))
         });
@@ -65,6 +70,7 @@ struct Opt {
 }
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() {
     let opt = Opt::from_args();
@@ -83,7 +89,7 @@ fn main() {
                 if opt.verbose {
                     println!("Converting {}", path.display());
                 }
-                Some(convert(&path.to_path_buf()))
+                Some(convert(NAME, &path.to_path_buf()))
             } else {
                 None
             }

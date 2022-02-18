@@ -173,6 +173,8 @@ mod test {
         }
     }
 
+    const NAME: &str = env!("CARGO_PKG_NAME");
+
     #[macro_export]
     macro_rules! assert_error {
         ($text:expr $(,)?) => {{
@@ -188,7 +190,7 @@ mod test {
                         .map_err(|err| Error::Parse(err, source.clone()))
                 })
                 .and_then(|ast| {
-                    renderer::render(&mut ast.iter().peekable())
+                    renderer::render(&mut ast.iter().peekable(), NAME, "-test-")
                         .map_err(|err| Error::Render(err, source.clone()))
                 });
             insta::assert_snapshot!(insta::internals::AutoName, format_result(result), $text);
