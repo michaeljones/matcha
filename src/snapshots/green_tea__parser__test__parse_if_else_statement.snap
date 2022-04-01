@@ -1,0 +1,22 @@
+---
+source: src/parser.rs
+expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
+---
+[
+    Text(
+        "Hello ",
+    ),
+    If(
+        "is_user",
+        [
+            Text(
+                "User",
+            ),
+        ],
+        [
+            Text(
+                "Unknown",
+            ),
+        ],
+    ),
+]

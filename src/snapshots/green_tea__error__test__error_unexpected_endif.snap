@@ -1,0 +1,13 @@
+---
+source: src/error.rs
+expression: "Hello {% endif %}"
+---
+Unexpected keyword: endif. Expected one of: if, for
+
+error: 
+  ┌─ -test-:1:10
+  │
+1 │ Hello {% endif %}
+  │          ^^^^^
+
+

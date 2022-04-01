@@ -60,7 +60,7 @@ fn color_choice() -> ColorChoice {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "templates", about = "Compiles templates into Gleam modules")]
+#[structopt(name = "green-tea", about = "Compiles templates into Gleam modules")]
 struct Opt {
     #[structopt(short, long)]
     verbose: bool,
@@ -85,7 +85,7 @@ fn main() {
         .filter_map(|entry| {
             let path = entry.path();
 
-            if path.extension() == Some(std::ffi::OsStr::new("gleamx")) {
+            if path.extension() == Some(std::ffi::OsStr::new("tea")) {
                 if opt.verbose {
                     println!("Converting {}", path.display());
                 }

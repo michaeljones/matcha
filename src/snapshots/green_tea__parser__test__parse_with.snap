@@ -1,0 +1,16 @@
+---
+source: src/parser.rs
+expression: "{> with user as User\n{{ user }}"
+---
+[
+    With(
+        (
+            "user",
+            8..12,
+        ),
+        "User",
+    ),
+    Identifier(
+        "user",
+    ),
+]

@@ -1,0 +1,15 @@
+---
+source: src/parser.rs
+expression: "Hello {[ name ]}, good to meet you"
+---
+[
+    Text(
+        "Hello ",
+    ),
+    Builder(
+        "name",
+    ),
+    Text(
+        ", good to meet you",
+    ),
+]

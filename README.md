@@ -1,4 +1,4 @@
-# Gleam Templates
+# Green Tea
 
 Generate type-safe Gleam modules from text-based template files.
 
@@ -9,7 +9,7 @@ parameters.
 ## Installation
 
 Download pre-built binaries for the latest release from the
-[Releases](https://github.com/michaeljones/gleam-templates/releases) page.
+[Releases](https://github.com/michaeljones/green-tea/releases) page.
 
 Build from source with:
 
@@ -22,16 +22,15 @@ cargo install --path .
 Run:
 
 ```
-templates
+green-tea
 ```
 
 At the root of your project and it will walk your project folder structure and compile any template
 files it finds.
 
-Template files should have a `.gleamx` extension though that needs to change as it promises JSX-like
-behaviour instead of text templates. Templates are compiled into `.gleam` files that can be imported
-like any other regular module. The modules expose a `render` function, that returns a `String`, and
-`render_builder` function that returns a `StringBuilder`.
+Template files should have a `.tea` extension. Templates are compiled into `.gleam` files that can
+be imported like any other regular module. The modules expose a `render` function, that returns a
+`String`, and `render_builder` function that returns a `StringBuilder`.
 
 Some errors, mostly syntax, will be picked up by the Rust code but it is possible to generate
 invalid modules and so the Gleam compiler will pick up further errors.

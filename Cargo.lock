@@ -107,6 +107,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "green-tea"
+version = "0.11.0"
+dependencies = [
+ "atty",
+ "codespan-reporting",
+ "env_logger",
+ "insta",
+ "log",
+ "structopt",
+ "unicode-segmentation",
+ "walkdir",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -362,20 +376,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
-]
-
-[[package]]
-name = "templates"
-version = "0.11.0"
-dependencies = [
- "atty",
- "codespan-reporting",
- "env_logger",
- "insta",
- "log",
- "structopt",
- "unicode-segmentation",
- "walkdir",
 ]
 
 [[package]]

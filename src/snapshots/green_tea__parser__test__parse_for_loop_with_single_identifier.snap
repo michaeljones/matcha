@@ -1,0 +1,19 @@
+---
+source: src/parser.rs
+expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
+---
+[
+    Text(
+        "Hello ",
+    ),
+    For(
+        "item",
+        None,
+        "list",
+        [
+            Identifier(
+                "item",
+            ),
+        ],
+    ),
+]

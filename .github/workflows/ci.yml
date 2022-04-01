@@ -109,5 +109,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: templates-${{ matrix.target }}
-        path: target/debug/templates
+        name: green-tea-${{ matrix.target }}
+        path: target/debug/green-tea

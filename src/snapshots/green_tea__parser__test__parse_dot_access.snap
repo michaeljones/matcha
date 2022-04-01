@@ -1,0 +1,18 @@
+---
+source: src/parser.rs
+expression: "Hello{% if user.is_admin %} Admin{% endif %}"
+---
+[
+    Text(
+        "Hello",
+    ),
+    If(
+        "user.is_admin",
+        [
+            Text(
+                " Admin",
+            ),
+        ],
+        [],
+    ),
+]

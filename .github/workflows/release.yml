@@ -58,15 +58,15 @@ jobs:
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            ARCHIVE="gleam-templates-$VERSION-${{ matrix.build }}.zip"
-            cp "target/release/templates.exe" "templates.exe"
-            7z a "$ARCHIVE" "templates.exe"
-            rm templates.exe
+            ARCHIVE="green-tea-$VERSION-${{ matrix.build }}.zip"
+            cp "target/release/green-tea.exe" "green-tea.exe"
+            7z a "$ARCHIVE" "green-tea.exe"
+            rm green-tea.exe
           else
-            ARCHIVE="gleam-templates-$VERSION-${{ matrix.build }}.tar.gz"
-            cp "target/release/templates" "templates"
-            tar -czvf "$ARCHIVE" "templates"
-            rm templates
+            ARCHIVE="green-tea-$VERSION-${{ matrix.build }}.tar.gz"
+            cp "target/release/green-tea" "green-tea"
+            tar -czvf "$ARCHIVE" "green-tea"
+            rm green-tea
           fi
           openssl dgst -r -sha256 -out "$ARCHIVE".sha256 "$ARCHIVE"
           openssl dgst -r -sha512 -out "$ARCHIVE".sha512 "$ARCHIVE"
@@ -110,9 +110,9 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
-          ARCHIVE="gleam-templates-$VERSION-linux-amd64.tar.gz"
-          cp "target/x86_64-unknown-linux-musl/release/templates" "templates"
-          tar -czvf "$ARCHIVE" "templates"
+          ARCHIVE="green-tea-$VERSION-linux-amd64.tar.gz"
+          cp "target/x86_64-unknown-linux-musl/release/green-tea" "green-tea"
+          tar -czvf "$ARCHIVE" "green-tea"
           openssl dgst -r -sha256 -out "$ARCHIVE".sha256 "$ARCHIVE"
           openssl dgst -r -sha512 -out "$ARCHIVE".sha512 "$ARCHIVE"
           echo "ASSET=$ARCHIVE" >> $GITHUB_ENV

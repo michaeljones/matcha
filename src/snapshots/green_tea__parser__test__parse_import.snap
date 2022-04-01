@@ -1,0 +1,12 @@
+---
+source: src/parser.rs
+expression: "{> import user.{User}\n{{ name }}"
+---
+[
+    Import(
+        "user.{User}",
+    ),
+    Identifier(
+        "name",
+    ),
+]
