@@ -292,6 +292,11 @@ Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone els
     }
 
     #[test]
+    fn test_render_for_from_expression() {
+        assert_render!("Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_render_dot_access() {
         assert_render!(
             "{> with user as MyUser

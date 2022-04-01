@@ -12,6 +12,7 @@ import template/if_comparison
 import template/nested_if_statement
 import template/for_loop
 import template/for_as_loop
+import template/for_loop_from_expression
 import template/dot_access
 import template/multiline
 import template/value_in_for_loop
@@ -111,6 +112,11 @@ pub fn for_loop_test() {
 
 pub fn for_as_loop_test() {
   for_as_loop.render(users: [NamedUser("Anna"), NamedUser("Bill")])
+  |> should.equal("Hello, to Anna and to Bill and everyone else\n")
+}
+
+pub fn for_loop_from_expression_test() {
+  for_loop_from_expression.render(users: [NamedUser("Anna"), NamedUser("Bill"), NamedUser("Christine")], limit: 2)
   |> should.equal("Hello, to Anna and to Bill and everyone else\n")
 }
 

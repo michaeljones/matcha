@@ -1,0 +1,21 @@
+---
+source: src/parser.rs
+expression: "Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}"
+---
+[
+    Text(
+        "Hello ",
+    ),
+    For(
+        "item",
+        Some(
+            "Item",
+        ),
+        "list.take(list, 2)",
+        [
+            Identifier(
+                "item",
+            ),
+        ],
+    ),
+]

@@ -369,6 +369,11 @@ mod test {
     }
 
     #[test]
+    fn test_parse_for_from_expression() {
+        assert_parse!("Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_parse_dot_access() {
         assert_parse!("Hello{% if user.is_admin %} Admin{% endif %}");
     }

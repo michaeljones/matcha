@@ -485,6 +485,11 @@ mod test {
     }
 
     #[test]
+    fn test_scan_for_from_expression() {
+        assert_scan!("Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_scan_dot_access() {
         assert_scan!("Hello{% if user.is_admin %} Admin{% endif %}");
     }
