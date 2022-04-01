@@ -14,7 +14,7 @@ expression: "Hello {{ name }}, {{ adjective }} to meet you"
         6..7,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "name",
         ),
         9..13,
@@ -34,7 +34,7 @@ expression: "Hello {{ name }}, {{ adjective }} to meet you"
         18..19,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "adjective",
         ),
         21..30,

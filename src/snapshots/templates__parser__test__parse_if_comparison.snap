@@ -1,0 +1,18 @@
+---
+source: src/parser.rs
+expression: "Hello {% if items != [] %}Some items{% endif %}"
+---
+[
+    Text(
+        "Hello ",
+    ),
+    If(
+        "items != []",
+        [
+            Text(
+                "Some items",
+            ),
+        ],
+        [],
+    ),
+]

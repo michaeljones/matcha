@@ -14,7 +14,7 @@ expression: "Hello {[ builder ]}, good to meet you"
         6..7,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "builder",
         ),
         9..16,

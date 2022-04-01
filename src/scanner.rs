@@ -14,7 +14,7 @@ pub enum Token {
     CloseValue,
     OpenBuilder,
     CloseBuilder,
-    GleamToken(String),
+    IdentifierOrGleamToken(String),
     Import,
     ImportDetails(String),
     With,
@@ -41,7 +41,7 @@ impl std::fmt::Display for Token {
             Token::CloseBuilder => "]}",
             Token::OpenStmt => "{%",
             Token::CloseStmt => "%}",
-            Token::GleamToken(name) => name,
+            Token::IdentifierOrGleamToken(name) => name,
             Token::Import => "import",
             Token::ImportDetails(_) => "import-details",
             Token::With => "with",
@@ -321,7 +321,7 @@ fn to_token(identifier: &str) -> Token {
         "import" => Token::Import,
         "with" => Token::With,
         "as" => Token::As,
-        other => Token::GleamToken(other.to_string()),
+        other => Token::IdentifierOrGleamToken(other.to_string()),
     }
 }
 

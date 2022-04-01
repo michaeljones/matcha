@@ -18,19 +18,19 @@ expression: "Hello {% if items != [] %}Some items{% endif %}"
         9..11,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "items",
         ),
         12..17,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "!=",
         ),
         18..20,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "[]",
         ),
         21..23,

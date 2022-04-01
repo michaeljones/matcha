@@ -18,7 +18,7 @@ expression: "Hello {% if is_user %}User{% endif %}"
         9..11,
     ),
     (
-        GleamToken(
+        IdentifierOrGleamToken(
             "is_user",
         ),
         12..19,
