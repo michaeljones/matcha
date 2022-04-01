@@ -346,4 +346,9 @@ Hello{% if user.is_admin %} Admin{% endif %}"
 Hello {[ name ]}, good to meet you"
         );
     }
+
+    #[test]
+    fn test_render_builder_expression() {
+        assert_render!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    }
 }

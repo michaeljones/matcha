@@ -20,6 +20,7 @@ import template/value_in_if_else
 import template/value_expression
 import template/quote
 import template/builder
+import template/builder_expression
 
 import my_user.{User, NamedUser}
 
@@ -57,6 +58,11 @@ pub fn builder_block_test() {
   let name_builder = string_builder.from_strings(["Anna", " ", "Bandana"])
   builder.render(name_builder)
   |> should.equal("Hello Anna Bandana, good to meet you\n")
+}
+
+pub fn builder_expression_test() {
+  builder_expression.render()
+  |> should.equal("Hello Anna and Bob, good to meet you\n")
 }
 
 pub fn if_statement_test() {

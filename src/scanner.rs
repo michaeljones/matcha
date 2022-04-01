@@ -508,4 +508,9 @@ mod test {
     fn test_scan_builder_block() {
         assert_scan!("Hello {[ builder ]}, good to meet you");
     }
+
+    #[test]
+    fn test_scan_builder_expression() {
+        assert_scan!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    }
 }
