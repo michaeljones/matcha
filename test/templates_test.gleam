@@ -8,6 +8,7 @@ import template/two_identifiers
 import template/double_identifier_usage
 import template/if_statement
 import template/if_else_statement
+import template/if_comparison
 import template/nested_if_statement
 import template/for_loop
 import template/for_as_loop
@@ -57,6 +58,14 @@ pub fn if_statement_test() {
 
   if_statement.render(False)
   |> should.equal("Hello\n")
+}
+
+pub fn if_comparison_test() {
+  if_comparison.render([])
+  |> should.equal("Hello\n")
+
+  if_comparison.render([User(is_admin: True)])
+  |> should.equal("Hello Users\n")
 }
 
 pub fn if_else_statement_test() {

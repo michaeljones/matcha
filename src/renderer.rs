@@ -254,6 +254,11 @@ Hello {% if is_user %}User{% else %}Unknown{% endif %}"
     }
 
     #[test]
+    fn test_render_if_comparison() {
+        assert_render!("Hello {% if items != [] %}Some items{% endif %}");
+    }
+
+    #[test]
     fn test_render_nested_if_statements() {
         assert_render!(
             "{> with is_user as Bool
