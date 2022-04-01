@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.0
+
+- Rename the project to 'green-tea' as the previous name was essentially 'templates' which is too
+  plain and generic to be comfortable using.
+
 ## 0.11.0
 
 - Support arbitrary Gleam syntax in value, if-condition and for-loop source locations. This means
