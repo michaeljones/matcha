@@ -184,11 +184,11 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 fn extract_identifier(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
-        Some((Token::Identifier(name), range)) => Ok((name.clone(), range.clone())),
+        Some((Token::GleamToken(name), range)) => Ok((name.clone(), range.clone())),
         Some((token, range)) => Err(ParserError::UnexpectedToken(
             token.clone(),
             range.clone(),
-            vec![Token::Identifier("".to_string())],
+            vec![Token::GleamToken("".to_string())],
         )),
         None => Err(ParserError::UnexpectedEnd),
     }

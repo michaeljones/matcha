@@ -1,6 +1,6 @@
 ---
 source: src/scanner.rs
-expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
+expression: "Hello {% if items != [] %}Some items{% endif %}"
 ---
 [
     (
@@ -14,53 +14,47 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         6..7,
     ),
     (
-        For,
-        9..12,
+        If,
+        9..11,
     ),
     (
         GleamToken(
-            "item",
+            "items",
         ),
-        13..17,
+        12..17,
     ),
     (
-        In,
+        GleamToken(
+            "!=",
+        ),
         18..20,
     ),
     (
         GleamToken(
-            "list",
+            "[]",
         ),
-        21..25,
+        21..23,
     ),
     (
         CloseStmt,
-        26..27,
+        24..25,
     ),
     (
-        OpenValue,
-        28..29,
-    ),
-    (
-        GleamToken(
-            "item",
+        Text(
+            "Some items",
         ),
-        31..35,
-    ),
-    (
-        CloseValue,
-        36..37,
+        26..36,
     ),
     (
         OpenStmt,
-        38..39,
+        36..37,
     ),
     (
-        EndFor,
-        41..47,
+        EndIf,
+        39..44,
     ),
     (
         CloseStmt,
-        48..49,
+        45..46,
     ),
 ]

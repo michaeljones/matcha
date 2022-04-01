@@ -1,8 +1,6 @@
 ---
 source: src/scanner.rs
-assertion_line: 456
 expression: "Hello{% if user.is_admin %} Admin{% endif %}"
-
 ---
 [
     (
@@ -20,7 +18,7 @@ expression: "Hello{% if user.is_admin %} Admin{% endif %}"
         8..10,
     ),
     (
-        Identifier(
+        GleamToken(
             "user.is_admin",
         ),
         11..24,

@@ -1,8 +1,6 @@
 ---
 source: src/scanner.rs
-assertion_line: 466
 expression: "{> with user as User\n{{ user }}"
-
 ---
 [
     (
@@ -14,7 +12,7 @@ expression: "{> with user as User\n{{ user }}"
         3..7,
     ),
     (
-        Identifier(
+        GleamToken(
             "user",
         ),
         8..12,
@@ -24,7 +22,7 @@ expression: "{> with user as User\n{{ user }}"
         13..15,
     ),
     (
-        Identifier(
+        GleamToken(
             "User",
         ),
         16..20,
@@ -38,7 +36,7 @@ expression: "{> with user as User\n{{ user }}"
         21..22,
     ),
     (
-        Identifier(
+        GleamToken(
             "user",
         ),
         24..28,

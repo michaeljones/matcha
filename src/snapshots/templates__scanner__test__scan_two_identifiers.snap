@@ -1,8 +1,6 @@
 ---
 source: src/scanner.rs
-assertion_line: 419
 expression: "Hello {{ name }}, {{ adjective }} to meet you"
-
 ---
 [
     (
@@ -16,7 +14,7 @@ expression: "Hello {{ name }}, {{ adjective }} to meet you"
         6..7,
     ),
     (
-        Identifier(
+        GleamToken(
             "name",
         ),
         9..13,
@@ -36,7 +34,7 @@ expression: "Hello {{ name }}, {{ adjective }} to meet you"
         18..19,
     ),
     (
-        Identifier(
+        GleamToken(
             "adjective",
         ),
         21..30,
