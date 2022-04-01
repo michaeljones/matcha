@@ -2,8 +2,11 @@
 
 ## 0.12.0
 
-- Rename the project to 'green-tea' as the previous name was essentially 'templates' which is too
-  plain and generic to be comfortable using.
+- **Breaking change**: Rename the project to 'green-tea' as the previous name was essentially
+  'templates' which is too plain and generic to be comfortable using.
+
+- **Breaking change**: The template files should now have a `.tea` suffix instead of `.gleamx`. This
+  might change again as there is a "Tea" language already.
 
 ## 0.11.0
 
@@ -31,7 +34,7 @@
 
 ## 0.8.0
 
-- Breaking change: all parameters to the template must now be declared using the `{> with ... as
+- **Breaking change**: all parameters to the template must now be declared using the `{> with ... as
   ...` syntax. The template generation will no longer try to automatically deduce parameters from
   the template contents. Being explicit allows us to include static content from imported modules
   without the generation getting confused about what is a parameter and what is an import.
