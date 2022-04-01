@@ -220,13 +220,4 @@ mod test {
 Hello"#
         );
     }
-
-    #[test]
-    fn test_error_duplicate_with_name() {
-        assert_error!(
-            r#"{> with name as String
-{> with name as String
-Hello"#
-        );
-    }
 }
