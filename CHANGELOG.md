@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.11.0
+
+- Support arbitrary Gleam syntax in value, if-condition and for-loop source locations. This means
+  that more work can be done by the compiled template file rather than having to preprocess data
+  before rendering the template.
+
+  The template system does not parse the Gleam expressions and so will allow invalid Gleam syntax to
+  be added which will cause an error with the Gleam compiler. 
+
+  Thank you to @lpil for the suggestion.
+
 ## 0.10.0
 
 - Add comment to generated files to indicate that they are auto-generated and ideally should not be
