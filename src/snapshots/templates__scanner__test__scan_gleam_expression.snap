@@ -1,6 +1,6 @@
 ---
 source: src/scanner.rs
-expression: "Hello {[ builder ]}, good to meet you"
+expression: "Hello {{ string.uppercase(name) }}, good to meet you"
 ---
 [
     (
@@ -10,23 +10,23 @@ expression: "Hello {[ builder ]}, good to meet you"
         0..6,
     ),
     (
-        OpenBuilder,
+        OpenValue,
         6..7,
     ),
     (
         IdentifierOrGleamToken(
-            "builder",
+            "string.uppercase(name)",
         ),
-        9..16,
+        9..31,
     ),
     (
-        CloseBuilder,
-        17..18,
+        CloseValue,
+        32..33,
     ),
     (
         Text(
             ", good to meet you",
         ),
-        19..36,
+        34..51,
     ),
 ]

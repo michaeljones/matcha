@@ -1,0 +1,56 @@
+---
+source: src/scanner.rs
+expression: "Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you"
+---
+[
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
+    ),
+    (
+        OpenBuilder,
+        6..7,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "string_builder.from_strings([\"Anna\",",
+        ),
+        9..45,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "\"",
+        ),
+        46..47,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "and",
+        ),
+        48..51,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "\",",
+        ),
+        52..54,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "\"Bob\"])",
+        ),
+        55..62,
+    ),
+    (
+        CloseBuilder,
+        63..64,
+    ),
+    (
+        Text(
+            ", good to meet you",
+        ),
+        65..82,
+    ),
+]

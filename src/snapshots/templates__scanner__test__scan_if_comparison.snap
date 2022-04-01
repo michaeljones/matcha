@@ -1,6 +1,6 @@
 ---
 source: src/scanner.rs
-expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
+expression: "Hello {% if items != [] %}Some items{% endif %}"
 ---
 [
     (
@@ -19,48 +19,42 @@ expression: "Hello {% if is_user %}User{% else %}Unknown{% endif %}"
     ),
     (
         IdentifierOrGleamToken(
-            "is_user",
+            "items",
         ),
-        12..19,
+        12..17,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "!=",
+        ),
+        18..20,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "[]",
+        ),
+        21..23,
     ),
     (
         CloseStmt,
-        20..21,
+        24..25,
     ),
     (
         Text(
-            "User",
+            "Some items",
         ),
-        22..26,
+        26..36,
     ),
     (
         OpenStmt,
-        26..27,
-    ),
-    (
-        Else,
-        29..33,
-    ),
-    (
-        CloseStmt,
-        34..35,
-    ),
-    (
-        Text(
-            "Unknown",
-        ),
-        36..43,
-    ),
-    (
-        OpenStmt,
-        43..44,
+        36..37,
     ),
     (
         EndIf,
-        46..51,
+        39..44,
     ),
     (
         CloseStmt,
-        52..53,
+        45..46,
     ),
 ]

@@ -1,0 +1,3 @@
+{> import my_user.{User}
+{> with users as List(User)
+Hello{% if users != [] %} Users{% endif %}

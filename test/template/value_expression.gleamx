@@ -1,0 +1,3 @@
+{> import gleam/string
+{> with name as String
+Hello {{ string.uppercase(name) }}, good to meet you

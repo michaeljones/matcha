@@ -1,8 +1,6 @@
 ---
 source: src/scanner.rs
-assertion_line: 414
 expression: "Hello {{ name }}, good to meet you"
-
 ---
 [
     (
@@ -16,7 +14,7 @@ expression: "Hello {{ name }}, good to meet you"
         6..7,
     ),
     (
-        Identifier(
+        IdentifierOrGleamToken(
             "name",
         ),
         9..13,

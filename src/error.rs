@@ -53,9 +53,9 @@ pub fn write<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
         },
         Error::Parse(error, source) => match error {
             ParserError::UnexpectedToken(token, range, expected) => match token {
-                Token::Identifier(name) => explain_with_source(
+                Token::IdentifierOrGleamToken(name) => explain_with_source(
                     writer,
-                    &format!("Unexpected identifier: {}", name),
+                    &format!("Unexpected token: {}", name),
                     source,
                     range,
                 ),
@@ -214,15 +214,6 @@ mod test {
 
     #[test]
     fn test_error_duplicate_with() {
-        assert_error!(
-            r#"{> with name as String
-{> with name as String
-Hello"#
-        );
-    }
-
-    #[test]
-    fn test_error_duplicate_with_name() {
         assert_error!(
             r#"{> with name as String
 {> with name as String

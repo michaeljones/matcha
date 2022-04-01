@@ -49,12 +49,12 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 ast.push(Node::Text(text.clone()));
             }
             Some((Token::OpenValue, _)) => {
-                let (name, _) = extract_identifier(tokens)?;
+                let (name, _) = extract_code(tokens)?;
                 ast.push(Node::Identifier(name.clone()));
                 consume_token(tokens, Token::CloseValue)?;
             }
             Some((Token::OpenBuilder, _)) => {
-                let (name, _) = extract_identifier(tokens)?;
+                let (name, _) = extract_code(tokens)?;
                 ast.push(Node::Builder(name.clone()));
                 consume_token(tokens, Token::CloseBuilder)?;
             }
@@ -114,7 +114,7 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
 
 fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     log::trace!("parse_if_statement");
-    let (name, _) = extract_identifier(tokens)?;
+    let (name, _) = extract_code(tokens)?;
     consume_token(tokens, Token::CloseStmt)?;
 
     let if_nodes = parse_inner(tokens, true)?;
@@ -165,7 +165,7 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
         None => return Err(ParserError::UnexpectedEnd),
     };
 
-    let (list_identifier, _) = extract_identifier(tokens)?;
+    let (list_identifier, _) = extract_code(tokens)?;
     consume_token(tokens, Token::CloseStmt)?;
 
     let loop_nodes = parse_inner(tokens, true)?;
@@ -184,14 +184,60 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 fn extract_identifier(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
-        Some((Token::Identifier(name), range)) => Ok((name.clone(), range.clone())),
+        Some((Token::IdentifierOrGleamToken(name), range)) => Ok((name.clone(), range.clone())),
         Some((token, range)) => Err(ParserError::UnexpectedToken(
             token.clone(),
             range.clone(),
-            vec![Token::Identifier("".to_string())],
+            vec![Token::IdentifierOrGleamToken("".to_string())],
         )),
         None => Err(ParserError::UnexpectedEnd),
     }
+}
+
+fn extract_code(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> {
+    log::trace!("extract_code");
+    let mut code = String::new();
+    let mut range: Option<Range> = None;
+
+    loop {
+        match tokens.peek() {
+            Some((Token::IdentifierOrGleamToken(name), token_range)) => {
+                // Create range and expand it to include all the tokens
+                // that we're adding to this string
+                range = range
+                    .map(|current| Range {
+                        start: std::cmp::min(token_range.start, current.start),
+                        end: std::cmp::max(token_range.end, current.end),
+                    })
+                    .and(Some(token_range.clone()));
+
+                // Place a space between each identifier
+                if !code.is_empty() {
+                    code.push(' ');
+                }
+
+                code.push_str(name);
+                tokens.next();
+            }
+            Some((Token::CloseStmt, _)) => break,
+            Some((Token::CloseValue, _)) => break,
+            Some((Token::CloseBuilder, _)) => break,
+            Some((token, range)) => {
+                if code.is_empty() {
+                    return Err(ParserError::UnexpectedToken(
+                        token.clone(),
+                        range.clone(),
+                        vec![Token::IdentifierOrGleamToken("".to_string())],
+                    ));
+                } else {
+                    break;
+                }
+            }
+            None => return Err(ParserError::UnexpectedEnd),
+        }
+    }
+
+    Ok((code, range.unwrap_or(Range { start: 0, end: 0 })))
 }
 
 fn extract_import_details(tokens: &mut TokenIter) -> Result<String, ParserError> {
@@ -274,6 +320,11 @@ mod test {
     }
 
     #[test]
+    fn test_parse_gleam_expression() {
+        assert_parse!("Hello {{ string.uppercase(name) }}, good to meet you");
+    }
+
+    #[test]
     fn test_parse_if_statement() {
         assert_parse!("Hello {% if is_user %}User{% endif %}");
     }
@@ -286,6 +337,11 @@ mod test {
     #[test]
     fn test_parse_if_else_statement() {
         assert_parse!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
+    }
+
+    #[test]
+    fn test_parse_if_comparison() {
+        assert_parse!("Hello {% if items != [] %}Some items{% endif %}");
     }
 
     #[test]
@@ -313,6 +369,11 @@ mod test {
     }
 
     #[test]
+    fn test_parse_for_from_expression() {
+        assert_parse!("Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_parse_dot_access() {
         assert_parse!("Hello{% if user.is_admin %} Admin{% endif %}");
     }
@@ -330,5 +391,10 @@ mod test {
     #[test]
     fn test_parse_builder_block() {
         assert_parse!("Hello {[ name ]}, good to meet you");
+    }
+
+    #[test]
+    fn test_parse_builder_expression() {
+        assert_parse!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 }

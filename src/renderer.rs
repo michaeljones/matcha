@@ -222,6 +222,14 @@ Hello {{ name }}, {{ adjective }} to meet you"
     }
 
     #[test]
+    fn test_render_gleam_expression() {
+        assert_render!(
+            "{> import gleam/string
+Hello {{ string.uppercase(name) }}, good to meet you"
+        );
+    }
+
+    #[test]
     fn test_repeated_identifier_usage() {
         assert_render!(
             "{> with name as String
@@ -254,6 +262,11 @@ Hello {% if is_user %}User{% else %}Unknown{% endif %}"
     }
 
     #[test]
+    fn test_render_if_comparison() {
+        assert_render!("Hello {% if items != [] %}Some items{% endif %}");
+    }
+
+    #[test]
     fn test_render_nested_if_statements() {
         assert_render!(
             "{> with is_user as Bool
@@ -276,6 +289,11 @@ Hello,{% for item in list %} to {{ item }} and {% endfor %} everyone else"
             "{> with list as List(Item)
 Hello,{% for item as Item in list %} to {{ item }} and {% endfor %} everyone else"
         );
+    }
+
+    #[test]
+    fn test_render_for_from_expression() {
+        assert_render!("Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}");
     }
 
     #[test]
@@ -327,5 +345,10 @@ Hello{% if user.is_admin %} Admin{% endif %}"
             "{> with name as StringBuilder
 Hello {[ name ]}, good to meet you"
         );
+    }
+
+    #[test]
+    fn test_render_builder_expression() {
+        assert_render!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 }

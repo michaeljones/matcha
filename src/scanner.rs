@@ -14,7 +14,7 @@ pub enum Token {
     CloseValue,
     OpenBuilder,
     CloseBuilder,
-    Identifier(String),
+    IdentifierOrGleamToken(String),
     Import,
     ImportDetails(String),
     With,
@@ -41,7 +41,7 @@ impl std::fmt::Display for Token {
             Token::CloseBuilder => "]}",
             Token::OpenStmt => "{%",
             Token::CloseStmt => "%}",
-            Token::Identifier(name) => name,
+            Token::IdentifierOrGleamToken(name) => name,
             Token::Import => "import",
             Token::ImportDetails(_) => "import-details",
             Token::With => "with",
@@ -103,7 +103,9 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
                     ));
                     iter.next();
 
-                    tokens = scan_identifiers(iter, tokens)?;
+                    tokens = scan_identifiers(iter, tokens, |first, second| {
+                        matches!(first, Some((_, "}"))) && matches!(second, Some((_, "}")))
+                    })?;
                 } else if let Some((second_index, "%")) = iter.peek() {
                     if !buffer.is_empty() {
                         tokens.push((
@@ -125,7 +127,9 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
                     ));
                     iter.next();
 
-                    tokens = scan_identifiers(iter, tokens)?;
+                    tokens = scan_identifiers(iter, tokens, |first, second| {
+                        matches!(first, Some((_, "%"))) && matches!(second, Some((_, "}")))
+                    })?;
                 } else if let Some((second_index, "[")) = iter.peek() {
                     if !buffer.is_empty() {
                         tokens.push((
@@ -148,7 +152,9 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
 
                     iter.next();
 
-                    tokens = scan_identifiers(iter, tokens)?;
+                    tokens = scan_identifiers(iter, tokens, |first, second| {
+                        matches!(first, Some((_, "]"))) && matches!(second, Some((_, "}")))
+                    })?;
                 } else if let Some((second_index, ">")) = iter.peek() {
                     tokens.push((
                         Token::OpenLine,
@@ -233,18 +239,28 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
     }
 }
 
-fn scan_identifiers(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> {
+type BreakCondition = fn(Option<&(usize, &str)>, Option<&(usize, &str)>) -> bool;
+
+fn scan_identifiers(
+    iter: &mut Iter,
+    mut tokens: Tokens,
+    break_condition: BreakCondition,
+) -> Result<Tokens, ScanError> {
     log::trace!("scan_identifiers");
+
     loop {
-        match iter.peek() {
-            Some((_index, "}")) | Some((_index, "%")) | Some((_index, "]"))
-            | Some((_index, "\n")) => {
-                break;
-            }
-            None => break,
-            Some(_) => {
+        // Clone iterator and move it forward so we can match on
+        // the next two graphemes at the same time
+        let mut next_grapheme_iter = iter.clone();
+        next_grapheme_iter.next();
+
+        match (iter.peek(), next_grapheme_iter.peek()) {
+            (first, second) if break_condition(first, second) => break,
+            (None, _) => break,
+            (Some((_, _)), _) => {
                 eat_spaces(iter);
-                let (identifier_or_keyword, range) = scan_identifier_or_keyword(iter);
+                let (identifier_or_keyword, range) =
+                    scan_identifier_or_keyword(iter, break_condition)?;
                 tokens.push((identifier_or_keyword, range));
                 eat_spaces(iter);
             }
@@ -254,37 +270,43 @@ fn scan_identifiers(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanE
     Ok(tokens)
 }
 
-fn scan_identifier_or_keyword(iter: &mut Iter) -> (Token, Range) {
+fn scan_identifier_or_keyword(
+    iter: &mut Iter,
+    break_condition: BreakCondition,
+) -> Result<(Token, Range), ScanError> {
     log::trace!("scan_identifier_or_keyword");
     let mut name = String::new();
     let mut start = None;
-    let mut end = 0;
+
+    // Clone iterator and move it forward so we can match on
+    // the next two graphemes at the same time
+    let mut next_grapheme_iter = iter.clone();
+    next_grapheme_iter.next();
 
     loop {
-        match iter.peek() {
-            Some((_index, "}")) | Some((_index, " ")) | Some((_index, "\n"))
-            | Some((_index, "%")) | Some((_index, "]")) => {
-                break;
-            }
-            Some((index, grapheme)) => {
+        match (iter.peek(), next_grapheme_iter.peek()) {
+            (first, second) if break_condition(first, second) => break,
+            (Some((_, " ")), _) => break,
+            (None, _) => break,
+            (Some((index, grapheme)), _) => {
                 start = start.or(Some(*index));
-                end = *index + 1;
                 name.push_str(grapheme);
                 iter.next();
-            }
-            None => {
-                break;
+                next_grapheme_iter.next();
             }
         }
     }
 
-    (
-        to_token(name.trim()),
+    let trimmed = name.trim();
+    let start = start.unwrap_or(0);
+
+    Ok((
+        to_token(trimmed),
         Range {
-            start: start.unwrap_or(0),
-            end,
+            start,
+            end: start + trimmed.len(),
         },
-    )
+    ))
 }
 
 fn to_token(identifier: &str) -> Token {
@@ -299,14 +321,15 @@ fn to_token(identifier: &str) -> Token {
         "import" => Token::Import,
         "with" => Token::With,
         "as" => Token::As,
-        other => Token::Identifier(other.to_string()),
+        other => Token::IdentifierOrGleamToken(other.to_string()),
     }
 }
 
 fn scan_line(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> {
     eat_spaces(iter);
 
-    let (token, range) = scan_identifier_or_keyword(iter);
+    let (token, range) =
+        scan_identifier_or_keyword(iter, |first, _| matches!(first, Some((_, "\n"))))?;
     tokens.push((token.clone(), range));
 
     eat_spaces(iter);
@@ -317,7 +340,7 @@ fn scan_line(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> {
             tokens.push((Token::ImportDetails(import_details), range));
         }
         _ => {
-            tokens = scan_identifiers(iter, tokens)?;
+            tokens = scan_identifiers(iter, tokens, |first, _| matches!(first, Some((_, "\n"))))?;
         }
     }
 
@@ -372,7 +395,7 @@ fn consume_grapheme(iter: &mut Iter, expected: &str) -> Result<Range, ScanError>
 
 fn eat_spaces(iter: &mut Iter) {
     log::trace!("eat_spaces");
-    while let Some((_index, " ")) = iter.peek() {
+    while let Some((_, " ")) = iter.peek() {
         iter.next();
     }
 }
@@ -420,6 +443,11 @@ mod test {
     }
 
     #[test]
+    fn test_scan_gleam_expression() {
+        assert_scan!("Hello {{ string.uppercase(name) }}, good to meet you");
+    }
+
+    #[test]
     fn test_scan_single_parens() {
         assert_scan!("Hello { name }, good to meet you");
     }
@@ -432,6 +460,11 @@ mod test {
     #[test]
     fn test_scan_if_else_statement() {
         assert_scan!("Hello {% if is_user %}User{% else %}Unknown{% endif %}");
+    }
+
+    #[test]
+    fn test_scan_if_comparison() {
+        assert_scan!("Hello {% if items != [] %}Some items{% endif %}");
     }
 
     #[test]
@@ -452,6 +485,11 @@ mod test {
     }
 
     #[test]
+    fn test_scan_for_from_expression() {
+        assert_scan!("Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}");
+    }
+
+    #[test]
     fn test_scan_dot_access() {
         assert_scan!("Hello{% if user.is_admin %} Admin{% endif %}");
     }
@@ -469,5 +507,10 @@ mod test {
     #[test]
     fn test_scan_builder_block() {
         assert_scan!("Hello {[ builder ]}, good to meet you");
+    }
+
+    #[test]
+    fn test_scan_builder_expression() {
+        assert_scan!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 }

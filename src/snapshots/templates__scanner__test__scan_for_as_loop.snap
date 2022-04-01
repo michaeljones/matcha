@@ -1,8 +1,6 @@
 ---
 source: src/scanner.rs
-assertion_line: 451
 expression: "Hello {% for item as Item in list %}{{ item }}{% endfor %}"
-
 ---
 [
     (
@@ -20,7 +18,7 @@ expression: "Hello {% for item as Item in list %}{{ item }}{% endfor %}"
         9..12,
     ),
     (
-        Identifier(
+        IdentifierOrGleamToken(
             "item",
         ),
         13..17,
@@ -30,7 +28,7 @@ expression: "Hello {% for item as Item in list %}{{ item }}{% endfor %}"
         18..20,
     ),
     (
-        Identifier(
+        IdentifierOrGleamToken(
             "Item",
         ),
         21..25,
@@ -40,7 +38,7 @@ expression: "Hello {% for item as Item in list %}{{ item }}{% endfor %}"
         26..28,
     ),
     (
-        Identifier(
+        IdentifierOrGleamToken(
             "list",
         ),
         29..33,
@@ -54,7 +52,7 @@ expression: "Hello {% for item as Item in list %}{{ item }}{% endfor %}"
         36..37,
     ),
     (
-        Identifier(
+        IdentifierOrGleamToken(
             "item",
         ),
         39..43,

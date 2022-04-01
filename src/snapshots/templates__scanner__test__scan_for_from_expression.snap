@@ -1,6 +1,6 @@
 ---
 source: src/scanner.rs
-expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
+expression: "Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endfor %}"
 ---
 [
     (
@@ -24,43 +24,59 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         13..17,
     ),
     (
-        In,
+        As,
         18..20,
     ),
     (
         IdentifierOrGleamToken(
-            "list",
+            "Item",
         ),
         21..25,
     ),
     (
+        In,
+        26..28,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "list.take(list,",
+        ),
+        29..44,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "2)",
+        ),
+        45..47,
+    ),
+    (
         CloseStmt,
-        26..27,
+        48..49,
     ),
     (
         OpenValue,
-        28..29,
+        50..51,
     ),
     (
         IdentifierOrGleamToken(
             "item",
         ),
-        31..35,
+        53..57,
     ),
     (
         CloseValue,
-        36..37,
+        58..59,
     ),
     (
         OpenStmt,
-        38..39,
+        60..61,
     ),
     (
         EndFor,
-        41..47,
+        63..69,
     ),
     (
         CloseStmt,
-        48..49,
+        70..71,
     ),
 ]
