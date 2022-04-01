@@ -443,6 +443,11 @@ mod test {
     }
 
     #[test]
+    fn test_scan_gleam_expression() {
+        assert_scan!("Hello {{ string.uppercase(name) }}, good to meet you");
+    }
+
+    #[test]
     fn test_scan_single_parens() {
         assert_scan!("Hello { name }, good to meet you");
     }

@@ -222,6 +222,14 @@ Hello {{ name }}, {{ adjective }} to meet you"
     }
 
     #[test]
+    fn test_render_gleam_expression() {
+        assert_render!(
+            "{> import gleam/string
+Hello {{ string.uppercase(name) }}, good to meet you"
+        );
+    }
+
+    #[test]
     fn test_repeated_identifier_usage() {
         assert_render!(
             "{> with name as String

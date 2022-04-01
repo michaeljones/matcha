@@ -16,6 +16,7 @@ import template/dot_access
 import template/multiline
 import template/value_in_for_loop
 import template/value_in_if_else
+import template/value_expression
 import template/quote
 import template/builder
 
@@ -39,6 +40,11 @@ pub fn two_identifiers_test() {
 
   two_identifiers.render("User", "nice")
   |> should.equal("Hello User, nice to meet you\n")
+}
+
+pub fn value_expression_test() {
+  value_expression.render("Anna")
+  |> should.equal("Hello ANNA, good to meet you\n")
 }
 
 pub fn double_identifier_usage_test() {

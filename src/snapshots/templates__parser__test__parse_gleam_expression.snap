@@ -1,0 +1,15 @@
+---
+source: src/parser.rs
+expression: "Hello {{ string.uppercase(name) }}, good to meet you"
+---
+[
+    Text(
+        "Hello ",
+    ),
+    Identifier(
+        "string.uppercase(name)",
+    ),
+    Text(
+        ", good to meet you",
+    ),
+]

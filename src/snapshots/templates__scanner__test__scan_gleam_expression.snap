@@ -1,0 +1,32 @@
+---
+source: src/scanner.rs
+expression: "Hello {{ string.uppercase(name) }}, good to meet you"
+---
+[
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
+    ),
+    (
+        OpenValue,
+        6..7,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "string.uppercase(name)",
+        ),
+        9..31,
+    ),
+    (
+        CloseValue,
+        32..33,
+    ),
+    (
+        Text(
+            ", good to meet you",
+        ),
+        34..51,
+    ),
+]

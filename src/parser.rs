@@ -320,6 +320,11 @@ mod test {
     }
 
     #[test]
+    fn test_parse_gleam_expression() {
+        assert_parse!("Hello {{ string.uppercase(name) }}, good to meet you");
+    }
+
+    #[test]
     fn test_parse_if_statement() {
         assert_parse!("Hello {% if is_user %}User{% endif %}");
     }
