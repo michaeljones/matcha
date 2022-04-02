@@ -1,4 +1,4 @@
-# Green Tea
+# Matcha
 
 Generate type-safe Gleam modules from text-based template files.
 
@@ -9,7 +9,7 @@ parameters.
 ## Installation
 
 Download pre-built binaries for the latest release from the
-[Releases](https://github.com/michaeljones/green-tea/releases) page.
+[Releases](https://github.com/michaeljones/matcha/releases) page.
 
 Build from source with:
 
@@ -22,13 +22,13 @@ cargo install --path .
 Run:
 
 ```
-green-tea
+matcha
 ```
 
 At the root of your project and it will walk your project folder structure and compile any template
 files it finds.
 
-Template files should have a `.tea` extension. Templates are compiled into `.gleam` files that can
+Template files should have a `.matcha` extension. Templates are compiled into `.gleam` files that can
 be imported like any other regular module. The modules expose a `render` function, that returns a
 `String`, and `render_builder` function that returns a `StringBuilder`.
 

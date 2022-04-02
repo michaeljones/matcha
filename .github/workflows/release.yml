@@ -58,15 +58,15 @@ jobs:
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            ARCHIVE="green-tea-$VERSION-${{ matrix.build }}.zip"
-            cp "target/release/green-tea.exe" "green-tea.exe"
-            7z a "$ARCHIVE" "green-tea.exe"
-            rm green-tea.exe
+            ARCHIVE="matcha-$VERSION-${{ matrix.build }}.zip"
+            cp "target/release/matcha.exe" "matcha.exe"
+            7z a "$ARCHIVE" "matcha.exe"
+            rm matcha.exe
           else
-            ARCHIVE="green-tea-$VERSION-${{ matrix.build }}.tar.gz"
-            cp "target/release/green-tea" "green-tea"
-            tar -czvf "$ARCHIVE" "green-tea"
-            rm green-tea
+            ARCHIVE="matcha-$VERSION-${{ matrix.build }}.tar.gz"
+            cp "target/release/matcha" "matcha"
+            tar -czvf "$ARCHIVE" "matcha"
+            rm matcha
           fi
           openssl dgst -r -sha256 -out "$ARCHIVE".sha256 "$ARCHIVE"
           openssl dgst -r -sha512 -out "$ARCHIVE".sha512 "$ARCHIVE"
@@ -110,9 +110,9 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
-          ARCHIVE="green-tea-$VERSION-linux-amd64.tar.gz"
-          cp "target/x86_64-unknown-linux-musl/release/green-tea" "green-tea"
-          tar -czvf "$ARCHIVE" "green-tea"
+          ARCHIVE="matcha-$VERSION-linux-amd64.tar.gz"
+          cp "target/x86_64-unknown-linux-musl/release/matcha" "matcha"
+          tar -czvf "$ARCHIVE" "matcha"
           openssl dgst -r -sha256 -out "$ARCHIVE".sha256 "$ARCHIVE"
           openssl dgst -r -sha512 -out "$ARCHIVE".sha512 "$ARCHIVE"
           echo "ASSET=$ARCHIVE" >> $GITHUB_ENV

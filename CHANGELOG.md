@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0
+
+- **Breaking change**: Rename the project to 'matcha' to remove the double-barrelled nature of the
+  previous name and avoid the clash with the `.tea` extension name.
+
+- **Breaking change**: The template files should now have a `.matcha` suffix instead of `.tea`.
+
 ## 0.12.0
 
 - **Breaking change**: Rename the project to 'green-tea' as the previous name was essentially
