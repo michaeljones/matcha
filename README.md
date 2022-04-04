@@ -1,4 +1,4 @@
-# Matcha
+# Matcha 🍵
 
 Generate type-safe Gleam modules from text-based template files.
 
