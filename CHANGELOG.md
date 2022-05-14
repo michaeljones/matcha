@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0
+
+- Fixed build for MacOS arm64.
+
+  Thank you to @michallepicki for noticing and fixing the issue.
+
 ## 0.13.0
 
 - **Breaking change**: Rename the project to 'matcha' to remove the double-barrelled nature of the
