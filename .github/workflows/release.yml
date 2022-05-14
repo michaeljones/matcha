@@ -45,13 +45,13 @@ jobs:
       - name: Handle Rust dependencies caching
         uses: Swatinem/rust-cache@v1
         with:
-          key: v1-${{ matrix.target }}
+          key: v2-${{ matrix.target }}
 
       - name: Build release binary
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release
+          args: --release --target ${{ matrix.target }}
 
       - name: Build archive
         shell: bash
@@ -59,12 +59,12 @@ jobs:
           VERSION="${GITHUB_REF#refs/tags/}"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             ARCHIVE="matcha-$VERSION-${{ matrix.build }}.zip"
-            cp "target/release/matcha.exe" "matcha.exe"
+            cp "target/${{ matrix.target }}/release/matcha.exe" "matcha.exe"
             7z a "$ARCHIVE" "matcha.exe"
             rm matcha.exe
           else
             ARCHIVE="matcha-$VERSION-${{ matrix.build }}.tar.gz"
-            cp "target/release/matcha" "matcha"
+            cp "target/${{ matrix.target }}/release/matcha" "matcha"
             tar -czvf "$ARCHIVE" "matcha"
             rm matcha
           fi
