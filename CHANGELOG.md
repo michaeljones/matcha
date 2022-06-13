@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0
+
+- **Breaking change**: No longer includes `gleam/list` import for templates that don't use the `for`
+  syntax. This is to avoid the import potentially be unused. If you use `gleam/list` for other
+  things in your template then you'll have to explicitly import it.
+
+  Thank you to @lpil for reporting the issue.
+
 ## 0.14.0
 
 - Fixed build for MacOS arm64.
