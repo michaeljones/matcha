@@ -6,6 +6,11 @@ This project provides a Rust program that parses a basic template format and out
 with 'render' functions that can be imported and called to render the template with different
 parameters.
 
+## Status
+
+Matcha is basic but currently feature complete and well tested. If the repository looks inactive it
+is because it is stable.
+
 ## Installation
 
 Download pre-built binaries for the latest release from the
@@ -35,9 +40,6 @@ be imported like any other regular module. The modules expose a `render` functio
 Some errors, mostly syntax, will be picked up by the Rust code but it is possible to generate
 invalid modules and so the Gleam compiler will pick up further errors.
 
-## Status
-
-Beta. The project has had some attention and the test coverage is good.
 
 ## Syntax
 
