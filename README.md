@@ -141,10 +141,10 @@ Lucy {{ second_name }}
 {> endfn
 ```
 
-The function always returns a `StringBuilder` value. The function body has its last new line
-trimmed, so the above function called as `full_name("Gleam")` would result in `Lucy Gleam` and not
-`\nLucy Gleam\n` or any other variation. If you want a trailing new line in the output then add an
-extra blank line before the `{> endfn`.
+The function always returns a `StringBuilder` value so you must use `{[ ... ]}` syntax to insert
+them into templates. The function body has its last new line trimmed, so the above function called
+as `full_name("Gleam")` would result in `Lucy Gleam` and not `\nLucy Gleam\n` or any other
+variation. If you want a trailing new line in the output then add an extra blank line before the `{> endfn`.
 
 The function declaration has no impact on the final template as all lines are removed from the
 final text.
