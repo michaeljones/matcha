@@ -146,6 +146,9 @@ trimmed, so the above function called as `full_name("Gleam")` would result in `L
 `\nLucy Gleam\n` or any other variation. If you want a trailing new line in the output then add an
 extra blank line before the `{> endfn`.
 
+The function declaration has no impact on the final template as all lines are removed from the
+final text.
+
 Functions make it easier to deal with repeated components within your template.
 
 ```

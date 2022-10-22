@@ -22,6 +22,7 @@ import template/quote
 import template/builder
 import template/builder_expression
 import template/function_with_arg
+import template/function_html
 
 import my_user.{User, NamedUser}
 
@@ -175,4 +176,11 @@ pub fn quote_test() {
 pub fn function_test() {
   function_with_arg.render(second_name: "Gleam")
   |> should.equal("Hello Lucy Gleam\n")
+
+  function_html.render()
+  |> should.equal("<ul>
+    <li class=\"px-2 py-1 font-bold\">Alice</li>
+    <li class=\"px-2 py-1 font-bold\">Bob</li>
+    <li class=\"px-2 py-1 font-bold\">Cary</li>
+</ul>\n")
 }
