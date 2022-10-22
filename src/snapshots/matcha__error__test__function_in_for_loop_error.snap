@@ -1,0 +1,13 @@
+---
+source: src/error.rs
+expression: "{% for item in list %}\n{> fn full_name(second_name: String)\nLucy {{ second_name }}\n{> endfn\n{% endfor %}"
+---
+Functions must be declared at the top level.
+
+error: 
+  ┌─ -test-:2:4
+  │
+2 │ {> fn full_name(second_name: String)
+  │    ^^
+
+

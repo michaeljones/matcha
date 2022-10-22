@@ -20,6 +20,7 @@ pub enum Node {
 pub enum ParserError {
     UnexpectedToken(Token, Range, Vec<Token>),
     UnexpectedEnd,
+    FunctionWithinStatement(Range),
 }
 
 pub fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
@@ -98,7 +99,11 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                         let (type_, _) = extract_identifier(tokens)?;
                         ast.push(Node::With((identifier, range), type_))
                     }
-                    Some((Token::Fn, _)) => {
+                    Some((Token::Fn, range)) => {
+                        if in_statement {
+                            return Err(ParserError::FunctionWithinStatement(range.clone()));
+                        }
+
                         let (head, range) = extract_code(tokens)?;
                         consume_token(tokens, Token::CloseLine, false)?;
                         let body = parse_inner(tokens, true)?;
