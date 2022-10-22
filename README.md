@@ -141,10 +141,24 @@ Lucy {{ second_name }}
 {> endfn
 ```
 
-The function always returns a `StringBuilder` value. The function body has its last new line trimmed
-so the above function called as `full_name("Gleam")` would result in `Lucy Gleam` and not `\nLucy
-Gleam\n` or any other variation. If you want a trailing new line in the output then add an extra
-blank line before the `{> endfn`.
+The function always returns a `StringBuilder` value. The function body has its last new line
+trimmed, so the above function called as `full_name("Gleam")` would result in `Lucy Gleam` and not
+`\nLucy Gleam\n` or any other variation. If you want a trailing new line in the output then add an
+extra blank line before the `{> endfn`.
+
+Functions make it easier to deal with repeated components within your template.
+
+```
+{> fn item(name: String)
+<li class="px-2 py-1 font-bold">{{ name }}</li>
+{> endfn
+
+<ul>
+    {[ item(name: "Alice") ]}
+    {[ item(name: "Bob") ]}
+    {[ item(name: "Cary") ]}
+</ul>
+```
 
 
 ## Output
