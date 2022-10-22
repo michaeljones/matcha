@@ -1,0 +1,5 @@
+{> with second_name as String
+{> fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+Hello {[ full_name(second_name) ]}

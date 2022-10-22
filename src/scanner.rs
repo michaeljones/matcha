@@ -27,6 +27,8 @@ pub enum Token {
     For,
     EndFor,
     In,
+    Fn,
+    EndFn,
 }
 
 impl std::fmt::Display for Token {
@@ -52,6 +54,8 @@ impl std::fmt::Display for Token {
             Token::For => "for",
             Token::EndFor => "endfor",
             Token::In => "in",
+            Token::Fn => "fn",
+            Token::EndFn => "endfn",
         };
         write!(f, "{}", str)
     }
@@ -156,6 +160,17 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
                         matches!(first, Some((_, "]"))) && matches!(second, Some((_, "}")))
                     })?;
                 } else if let Some((second_index, ">")) = iter.peek() {
+                    if !buffer.is_empty() {
+                        tokens.push((
+                            Token::Text(buffer),
+                            Range {
+                                start: buffer_start_index.unwrap_or(0),
+                                end: first_index,
+                            },
+                        ));
+                        buffer = String::new();
+                    }
+
                     tokens.push((
                         Token::OpenLine,
                         Range {
@@ -163,11 +178,12 @@ fn scan_plain(iter: &mut Iter, mut tokens: Tokens) -> Result<Tokens, ScanError> 
                             end: *second_index,
                         },
                     ));
+
                     iter.next();
 
                     tokens = scan_line(iter, tokens)?;
 
-                    let range = consume_grapheme(iter, "\n")?;
+                    let range = consume_grapheme(iter, "\n", true)?;
                     tokens.push((Token::CloseLine, range));
                 } else {
                     buffer.push('{');
@@ -321,6 +337,8 @@ fn to_token(identifier: &str) -> Token {
         "import" => Token::Import,
         "with" => Token::With,
         "as" => Token::As,
+        "fn" => Token::Fn,
+        "endfn" => Token::EndFn,
         other => Token::IdentifierOrGleamToken(other.to_string()),
     }
 }
@@ -380,13 +398,15 @@ fn scan_import_details(iter: &mut Iter) -> (String, Range) {
     )
 }
 
-fn consume_grapheme(iter: &mut Iter, expected: &str) -> Result<Range, ScanError> {
+fn consume_grapheme(iter: &mut Iter, expected: &str, accept_end: bool) -> Result<Range, ScanError> {
     log::trace!("consume_grapheme");
     match iter.next() {
         Some((index, grapheme)) if grapheme == expected => Ok(Range {
             start: index,
             end: index,
         }),
+        // TODO: Fix range for end of stream
+        None if accept_end => Ok(Range { start: 0, end: 0 }),
         entry => Err(entry
             .map(|(index, value)| ScanError::UnexpectedGrapheme(value.to_string(), index))
             .unwrap_or(ScanError::UnexpectedEnd)),
@@ -512,5 +532,25 @@ mod test {
     #[test]
     fn test_scan_builder_expression() {
         assert_scan!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    }
+
+    #[test]
+    fn test_scan_function_start() {
+        assert_scan!("{> fn concat(x: String, y: String) -> String\n");
+    }
+
+    #[test]
+    fn test_scan_function_end() {
+        assert_scan!("{> endfn\n");
+    }
+
+    #[test]
+    fn test_scan_function_end_eof() {
+        assert_scan!("{> endfn");
+    }
+
+    #[test]
+    fn test_scan_function_whole() {
+        assert_scan!("{> fn classes() -> String\nx y\n{> endfn\n");
     }
 }

@@ -1,0 +1,24 @@
+---
+source: src/parser.rs
+expression: "{> fn full_name(second_name: String)\nLucy {{ second_name }}\n{> endfn\nHello {[ full_name(\"Gleam\") ]}"
+---
+[
+    BlockFunction(
+        "full_name(second_name: String)",
+        [
+            Text(
+                "Lucy ",
+            ),
+            Identifier(
+                "second_name",
+            ),
+        ],
+        0..0,
+    ),
+    Text(
+        "Hello ",
+    ),
+    Builder(
+        "full_name(\"Gleam\")",
+    ),
+]

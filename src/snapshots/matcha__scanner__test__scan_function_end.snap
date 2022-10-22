@@ -1,0 +1,18 @@
+---
+source: src/scanner.rs
+expression: "{> endfn\n"
+---
+[
+    (
+        OpenLine,
+        0..1,
+    ),
+    (
+        EndFn,
+        3..8,
+    ),
+    (
+        CloseLine,
+        8..8,
+    ),
+]

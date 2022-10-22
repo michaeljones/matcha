@@ -8,32 +8,50 @@ pub enum RenderError {
     DuplicateParamName(String, Range),
 }
 
+#[derive(Debug)]
+struct Context {
+    pub builder_lines: String,
+    pub imports: Vec<String>,
+    pub functions: Vec<String>,
+    pub typed_params: Vec<(String, String)>,
+    pub includes_for_loop: bool,
+}
+
 pub fn render(
     iter: &mut NodeIter,
     prog_name: &str,
     from_file_name: &str,
 ) -> Result<String, RenderError> {
-    let (builder_lines, imports, typed_params, includes_for_loop) = render_lines(iter)?;
+    let context = render_lines(iter)?;
 
-    let import_lines = imports
+    let import_lines = context
+        .imports
         .iter()
         .map(|details| format!("import {}", details))
         .collect::<Vec<_>>()
         .join("\n");
 
-    let params_string = typed_params
+    let params_string = context
+        .typed_params
         .iter()
         .map(|(param_name, type_name)| format!("{} {}: {}", param_name, param_name, type_name))
         .collect::<Vec<_>>()
         .join(", ");
 
-    let args_string = typed_params
+    let args_string = context
+        .typed_params
         .iter()
         .map(|(param_name, _)| format!("{}: {}", param_name, param_name))
         .collect::<Vec<_>>()
         .join(", ");
 
-    let list_import = if includes_for_loop {
+    let functions = if context.functions.is_empty() {
+        String::new()
+    } else {
+        context.functions.join("\n")
+    };
+
+    let list_import = if context.includes_for_loop {
         "import gleam/list\n"
     } else {
         ""
@@ -44,7 +62,7 @@ pub fn render(
 
 import gleam/string_builder.{{StringBuilder}}
 {list_import}
-{import_lines}
+{import_lines}{functions}
 
 pub fn render_builder({params_string}) -> StringBuilder {{
     let builder = string_builder.from_string("")
@@ -61,18 +79,17 @@ pub fn render({params_string}) -> String {{
         list_import = list_import,
         import_lines = import_lines,
         params_string = params_string,
-        builder_lines = builder_lines,
+        builder_lines = context.builder_lines,
         args_string = args_string
     );
 
     Ok(output)
 }
 
-type RenderDetails = (String, Vec<String>, Vec<(String, String)>, bool);
-
-fn render_lines(iter: &mut NodeIter) -> Result<RenderDetails, RenderError> {
+fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
     let mut builder_lines = String::new();
     let mut imports = vec![];
+    let mut functions = vec![];
 
     // Use a Vec<(String, String)> instead of a HashMap to maintain order which gives the users
     // some control, though parameters are labelled and can be called in any order. Some kind of
@@ -121,10 +138,8 @@ fn render_lines(iter: &mut NodeIter) -> Result<RenderDetails, RenderError> {
             }
             Some(Node::If(identifier_name, if_nodes, else_nodes)) => {
                 iter.next();
-                let (if_lines, _, _, if_block_includes_for_loop) =
-                    render_lines(&mut if_nodes.iter().peekable())?;
-                let (else_lines, _, _, else_block_includes_for_loop) =
-                    render_lines(&mut else_nodes.iter().peekable())?;
+                let if_context = render_lines(&mut if_nodes.iter().peekable())?;
+                let else_context = render_lines(&mut else_nodes.iter().peekable())?;
                 builder_lines.push_str(&format!(
                     r#"    let builder = case {} {{
         True -> {{
@@ -137,10 +152,11 @@ fn render_lines(iter: &mut NodeIter) -> Result<RenderDetails, RenderError> {
         }}
 }}
 "#,
-                    identifier_name, if_lines, else_lines
+                    identifier_name, if_context.builder_lines, else_context.builder_lines
                 ));
-                includes_for_loop =
-                    includes_for_loop || if_block_includes_for_loop || else_block_includes_for_loop;
+                includes_for_loop = includes_for_loop
+                    || if_context.includes_for_loop
+                    || else_context.includes_for_loop;
             }
             Some(Node::For(entry_identifier, entry_type, list_identifier, loop_nodes)) => {
                 iter.next();
@@ -150,23 +166,41 @@ fn render_lines(iter: &mut NodeIter) -> Result<RenderDetails, RenderError> {
                     .map(|value| format!(": {}", value))
                     .unwrap_or_else(|| "".to_string());
 
-                let (loop_lines, _, _, _) = render_lines(&mut loop_nodes.iter().peekable())?;
+                let loop_context = render_lines(&mut loop_nodes.iter().peekable())?;
                 builder_lines.push_str(&format!(
                     r#"    let builder = list.fold({}, builder, fn(builder, {}{}) {{
         {}
         builder
 }})
 "#,
-                    list_identifier, entry_identifier, entry_type, loop_lines
+                    list_identifier, entry_identifier, entry_type, loop_context.builder_lines
                 ));
 
                 includes_for_loop = true;
+            }
+            Some(Node::BlockFunction(head, body_nodes, _range)) => {
+                iter.next();
+                let body_context = render_lines(&mut body_nodes.iter().peekable())?;
+                let body = body_context.builder_lines;
+                functions.push(format!(
+                    r#"fn {head} -> StringBuilder {{
+    let builder = string_builder.from_string("")
+{body}
+    builder
+}}"#,
+                ));
             }
             None => break,
         }
     }
 
-    Ok((builder_lines, imports, typed_params, includes_for_loop))
+    Ok(Context {
+        builder_lines,
+        imports,
+        functions,
+        typed_params,
+        includes_for_loop,
+    })
 }
 
 #[cfg(test)]
@@ -362,5 +396,25 @@ Hello {[ name ]}, good to meet you"
     #[test]
     fn test_render_builder_expression() {
         assert_render!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    }
+
+    #[test]
+    fn test_render_function() {
+        assert_render!("{> fn classes()\na b c d\n{> endfn\nHello world");
+    }
+
+    #[test]
+    fn test_render_function_and_usage() {
+        assert_render!("{> fn name()\nLucy\n{> endfn\nHello {[ name() ]}");
+    }
+
+    #[test]
+    fn test_render_function_with_arg_and_usage() {
+        assert_render!(
+            r#"{> fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+Hello {[ full_name("Gleam") ]}"#
+        );
     }
 }

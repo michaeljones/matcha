@@ -13,6 +13,7 @@ pub enum Node {
     For(String, Option<Type>, String, Vec<Node>),
     Import(String),
     With((String, Range), Type),
+    BlockFunction(String, Vec<Node>, Range),
 }
 
 #[derive(Debug)]
@@ -27,6 +28,7 @@ pub fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
 }
 
 fn parse_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
+    log::trace!("parse_statement");
     match tokens.next() {
         Some((Token::If, _)) => parse_if_statement(tokens),
         Some((Token::For, _)) => parse_for_statement(tokens),
@@ -51,12 +53,12 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
             Some((Token::OpenValue, _)) => {
                 let (name, _) = extract_code(tokens)?;
                 ast.push(Node::Identifier(name.clone()));
-                consume_token(tokens, Token::CloseValue)?;
+                consume_token(tokens, Token::CloseValue, false)?;
             }
             Some((Token::OpenBuilder, _)) => {
                 let (name, _) = extract_code(tokens)?;
                 ast.push(Node::Builder(name.clone()));
-                consume_token(tokens, Token::CloseBuilder)?;
+                consume_token(tokens, Token::CloseBuilder, false)?;
             }
             Some((Token::OpenStmt, _)) => {
                 if let Some((Token::Else, _)) | Some((Token::EndIf, _)) | Some((Token::EndFor, _)) =
@@ -81,6 +83,10 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                 ast.push(node);
             }
             Some((Token::OpenLine, _)) => {
+                if let Some((Token::EndFn, _)) = tokens.peek() {
+                    break;
+                }
+
                 match tokens.next() {
                     Some((Token::Import, _)) => {
                         let import_details = extract_import_details(tokens)?;
@@ -88,13 +94,21 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                     }
                     Some((Token::With, _)) => {
                         let (identifier, range) = extract_identifier(tokens)?;
-                        consume_token(tokens, Token::As)?;
+                        consume_token(tokens, Token::As, false)?;
                         let (type_, _) = extract_identifier(tokens)?;
                         ast.push(Node::With((identifier, range), type_))
                     }
+                    Some((Token::Fn, _)) => {
+                        let (head, range) = extract_code(tokens)?;
+                        consume_token(tokens, Token::CloseLine, false)?;
+                        let body = parse_inner(tokens, true)?;
+                        let body = trim_trailing_newline(body);
+                        consume_token(tokens, Token::EndFn, false)?;
+                        ast.push(Node::BlockFunction(head, body, range))
+                    }
                     _ => {}
                 }
-                consume_token(tokens, Token::CloseLine)?;
+                consume_token(tokens, Token::CloseLine, false)?;
             }
             Some((token, range)) => {
                 return Err(ParserError::UnexpectedToken(
@@ -115,21 +129,21 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
 fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     log::trace!("parse_if_statement");
     let (name, _) = extract_code(tokens)?;
-    consume_token(tokens, Token::CloseStmt)?;
+    consume_token(tokens, Token::CloseStmt, false)?;
 
     let if_nodes = parse_inner(tokens, true)?;
     let mut else_nodes = vec![];
 
     match tokens.next() {
         Some((Token::EndIf, _)) => {
-            consume_token(tokens, Token::CloseStmt)?;
+            consume_token(tokens, Token::CloseStmt, false)?;
         }
         Some((Token::Else, _)) => {
-            consume_token(tokens, Token::CloseStmt)?;
+            consume_token(tokens, Token::CloseStmt, false)?;
 
             else_nodes = parse_inner(tokens, true)?;
-            consume_token(tokens, Token::EndIf)?;
-            consume_token(tokens, Token::CloseStmt)?;
+            consume_token(tokens, Token::EndIf, false)?;
+            consume_token(tokens, Token::CloseStmt, false)?;
         }
         Some((token, range)) => {
             return Err(ParserError::UnexpectedToken(
@@ -147,11 +161,12 @@ fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 }
 
 fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
+    log::trace!("parse_for_statement");
     let (entry_identifier, _) = extract_identifier(tokens)?;
     let entry_type = match tokens.next() {
         Some((Token::As, _)) => {
             let (type_identifier, _) = extract_identifier(tokens)?;
-            consume_token(tokens, Token::In)?;
+            consume_token(tokens, Token::In, false)?;
             Some(type_identifier)
         }
         Some((Token::In, _)) => None,
@@ -166,12 +181,12 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
     };
 
     let (list_identifier, _) = extract_code(tokens)?;
-    consume_token(tokens, Token::CloseStmt)?;
+    consume_token(tokens, Token::CloseStmt, false)?;
 
     let loop_nodes = parse_inner(tokens, true)?;
 
-    consume_token(tokens, Token::EndFor)?;
-    consume_token(tokens, Token::CloseStmt)?;
+    consume_token(tokens, Token::EndFor, false)?;
+    consume_token(tokens, Token::CloseStmt, false)?;
 
     Ok(Node::For(
         entry_identifier,
@@ -222,6 +237,7 @@ fn extract_code(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> 
             Some((Token::CloseStmt, _)) => break,
             Some((Token::CloseValue, _)) => break,
             Some((Token::CloseBuilder, _)) => break,
+            Some((Token::CloseLine, _)) => break,
             Some((token, range)) => {
                 if code.is_empty() {
                     return Err(ParserError::UnexpectedToken(
@@ -253,8 +269,12 @@ fn extract_import_details(tokens: &mut TokenIter) -> Result<String, ParserError>
     }
 }
 
-fn consume_token(tokens: &mut TokenIter, expected_token: Token) -> Result<(), ParserError> {
-    log::trace!("consume_token");
+fn consume_token(
+    tokens: &mut TokenIter,
+    expected_token: Token,
+    accept_end: bool,
+) -> Result<(), ParserError> {
+    log::trace!("consume_token: {:?}", expected_token);
     match tokens.next() {
         Some((matched_token, _)) if *matched_token == expected_token => Ok(()),
         Some((matched_token, range)) => Err(ParserError::UnexpectedToken(
@@ -262,8 +282,49 @@ fn consume_token(tokens: &mut TokenIter, expected_token: Token) -> Result<(), Pa
             range.clone(),
             vec![expected_token],
         )),
-        None => Err(ParserError::UnexpectedEnd),
+        None => {
+            if accept_end {
+                Ok(())
+            } else {
+                log::error!(
+                    "consume_token - found: None, expected_token: {:?}",
+                    expected_token
+                );
+                Err(ParserError::UnexpectedEnd)
+            }
+        }
     }
+}
+
+/// Find the last item in the nodes and if it is a Text node then trim the final '\n' from it. If
+/// it is just a '\n' then drop the node entirely
+fn trim_trailing_newline(nodes: Vec<Node>) -> Vec<Node> {
+    let length = nodes.len();
+    nodes
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, node)| {
+            if i == length - 1 {
+                match node {
+                    Node::Text(text) => {
+                        if text == "\n" {
+                            None
+                        } else {
+                            Some(Node::Text(
+                                text.strip_suffix('\n')
+                                    .map(|str| String::from(str))
+                                    .unwrap_or(text.to_string()),
+                            ))
+                        }
+                    }
+
+                    node => Some(node),
+                }
+            } else {
+                Some(node)
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -396,5 +457,25 @@ mod test {
     #[test]
     fn test_parse_builder_expression() {
         assert_parse!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    }
+
+    #[test]
+    fn test_parse_function() {
+        assert_parse!("{> fn classes()\na b c d\n{> endfn\n");
+    }
+
+    #[test]
+    fn test_parse_function_with_trailing_new_line() {
+        assert_parse!("{> fn classes()\na b c d\n\n{> endfn\n");
+    }
+
+    #[test]
+    fn test_parse_function_with_arg_and_usage() {
+        assert_parse!(
+            r#"{> fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+Hello {[ full_name("Gleam") ]}"#
+        );
     }
 }

@@ -21,6 +21,7 @@ import template/value_expression
 import template/quote
 import template/builder
 import template/builder_expression
+import template/function_with_arg
 
 import my_user.{User, NamedUser}
 
@@ -169,4 +170,9 @@ pub fn multiline_test() {
 pub fn quote_test() {
   quote.render(name: "Anna")
   |> should.equal("<div class=\"my-class\">Anna</div>\n")
+}
+
+pub fn function_test() {
+  function_with_arg.render(second_name: "Gleam")
+  |> should.equal("Hello Lucy Gleam\n")
 }

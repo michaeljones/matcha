@@ -131,6 +131,22 @@ to use with the `with` syntax below to help Gleam check variables used in the te
 {> import my_user.{MyUser}
 ```
 
+### Functions
+
+You can use the `{> fn ... {> endfn` syntax to add a local function to your template:
+
+```
+{> fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+```
+
+The function always returns a `StringBuilder` value. The function body has its last new line trimmed
+so the above function called as `full_name("Gleam")` would result in `Lucy Gleam` and not `\nLucy
+Gleam\n` or any other variation. If you want a trailing new line in the output then add an extra
+blank line before the `{> endfn`.
+
+
 ## Output
 
 A template like:

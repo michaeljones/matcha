@@ -1,0 +1,15 @@
+---
+source: src/parser.rs
+expression: "{> fn classes() -> String\na b c d\n\n{> endfn\n"
+---
+[
+    BlockFunction(
+        "classes() -> String",
+        [
+            Text(
+                "a b c d\n",
+            ),
+        ],
+        0..0,
+    ),
+]
