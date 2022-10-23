@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.16.0
+
+- Support `{> fn` and `{> pub fn` syntax for declaring private and public functions within the
+  template file. This allows better locality of helper functions and easy access to template
+  behaviour.
+
+  Template files which only have function declarations and no meaningful template content will not
+  have the `render` and `render_builder` methods so they can be used library modules with just
+  helper functions.
+
 ## 0.15.0
 
 - **Breaking change**: No longer includes `gleam/list` import for templates that don't use the `for`
