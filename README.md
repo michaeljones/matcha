@@ -149,7 +149,7 @@ variation. If you want a trailing new line in the output then add an extra blank
 The function declaration has no impact on the final template as all lines are removed from the
 final text.
 
-Functions make it easier to deal with repeated components within your template.
+Like in normal code, functions make it easier to deal with repeated components within your template.
 
 ```
 {> fn item(name: String)
@@ -163,6 +163,18 @@ Functions make it easier to deal with repeated components within your template.
 </ul>
 ```
 
+You can use the `pub` keyword to declare the function as public in which case other modules will be
+able to import it from gleam module compiled from the template.
+
+```
+{> pub fn user_item(name: String)
+<li class="px-2 py-1 font-bold">{{ name }}</li>
+{> endfn
+```
+
+If a template only includes function declarations and no meaningful template content then matcha
+will not add the `render` and `render_builder`. Instead the module will act as a library of
+functions where each function body is a template.
 
 ## Output
 
