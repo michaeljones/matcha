@@ -3,26 +3,26 @@ import gleam/string_builder
 import gleeunit
 import gleeunit/should
 
-import template/identifier
-import template/two_identifiers
-import template/double_identifier_usage
-import template/if_statement
-import template/if_else_statement
-import template/if_comparison
-import template/nested_if_statement
-import template/for_loop
-import template/for_as_loop
-import template/for_loop_from_expression
-import template/dot_access
-import template/multiline
-import template/value_in_for_loop
-import template/value_in_if_else
-import template/value_expression
-import template/quote
-import template/builder
-import template/builder_expression
-import template/function_with_arg
-import template/function_html
+import templates/identifier
+import templates/two_identifiers
+import templates/double_identifier_usage
+import templates/if_statement
+import templates/if_else_statement
+import templates/if_comparison
+import templates/nested_if_statement
+import templates/for_loop
+import templates/for_as_loop
+import templates/for_loop_from_expression
+import templates/dot_access
+import templates/multiline
+import templates/value_in_for_loop
+import templates/value_in_if_else
+import templates/value_expression
+import templates/quote
+import templates/builder
+import templates/builder_expression
+import templates/function_with_arg
+import templates/function_html
 
 import my_user.{User, NamedUser}
 
