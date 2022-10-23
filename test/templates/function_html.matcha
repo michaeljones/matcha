@@ -1,0 +1,8 @@
+{> fn item(name: String)
+<li class="px-2 py-1 font-bold">{{ name }}</li>
+{> endfn
+<ul>
+    {[ item("Alice") ]}
+    {[ item("Bob") ]}
+    {[ item("Cary") ]}
+</ul>

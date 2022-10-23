@@ -1,2 +1,2 @@
 /target
-/test/template/*.gleam
+/test/templates/*.gleam

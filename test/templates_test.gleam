@@ -3,24 +3,27 @@ import gleam/string_builder
 import gleeunit
 import gleeunit/should
 
-import template/identifier
-import template/two_identifiers
-import template/double_identifier_usage
-import template/if_statement
-import template/if_else_statement
-import template/if_comparison
-import template/nested_if_statement
-import template/for_loop
-import template/for_as_loop
-import template/for_loop_from_expression
-import template/dot_access
-import template/multiline
-import template/value_in_for_loop
-import template/value_in_if_else
-import template/value_expression
-import template/quote
-import template/builder
-import template/builder_expression
+import templates/identifier
+import templates/two_identifiers
+import templates/double_identifier_usage
+import templates/if_statement
+import templates/if_else_statement
+import templates/if_comparison
+import templates/nested_if_statement
+import templates/for_loop
+import templates/for_as_loop
+import templates/for_loop_from_expression
+import templates/dot_access
+import templates/multiline
+import templates/value_in_for_loop
+import templates/value_in_if_else
+import templates/value_expression
+import templates/quote
+import templates/builder
+import templates/builder_expression
+import templates/function_with_arg
+import templates/function_html
+import templates/use_pub_function
 
 import my_user.{User, NamedUser}
 
@@ -169,4 +172,19 @@ pub fn multiline_test() {
 pub fn quote_test() {
   quote.render(name: "Anna")
   |> should.equal("<div class=\"my-class\">Anna</div>\n")
+}
+
+pub fn function_test() {
+  function_with_arg.render(second_name: "Gleam")
+  |> should.equal("Hello Lucy Gleam\n")
+
+  function_html.render()
+  |> should.equal("<ul>
+    <li class=\"px-2 py-1 font-bold\">Alice</li>
+    <li class=\"px-2 py-1 font-bold\">Bob</li>
+    <li class=\"px-2 py-1 font-bold\">Cary</li>
+</ul>\n")
+
+  use_pub_function.render()
+  |> should.equal("Hello Lucy, welcome to the test suite.\n")
 }

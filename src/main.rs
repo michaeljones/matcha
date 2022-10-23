@@ -16,7 +16,7 @@ fn convert(prog_name: &str, file_path: &std::path::Path) -> Result<(), ()> {
     let from_file_name = file_path
         .file_name()
         .map(|name| name.to_string_lossy().into_owned())
-        .unwrap_or(String::from("unknown"));
+        .unwrap_or_else(|| String::from("unknown"));
 
     let result = std::fs::read_to_string(file_path)
         .map_err(|err| Error::IO(err, file_path.to_path_buf()))
@@ -89,7 +89,7 @@ fn main() {
                 if opt.verbose {
                     println!("Converting {}", path.display());
                 }
-                Some(convert(NAME, &path.to_path_buf()))
+                Some(convert(NAME, path))
             } else {
                 None
             }

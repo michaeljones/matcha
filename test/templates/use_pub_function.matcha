@@ -1,0 +1,2 @@
+{> import templates/pub_functions.{hello_lucy}
+{[ hello_lucy() ]}, welcome to the test suite.

@@ -131,6 +131,51 @@ to use with the `with` syntax below to help Gleam check variables used in the te
 {> import my_user.{MyUser}
 ```
 
+### Functions
+
+You can use the `{> fn ... {> endfn` syntax to add a local function to your template:
+
+```
+{> fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+```
+
+The function always returns a `StringBuilder` value so you must use `{[ ... ]}` syntax to insert
+them into templates. The function body has its last new line trimmed, so the above function called
+as `full_name("Gleam")` would result in `Lucy Gleam` and not `\nLucy Gleam\n` or any other
+variation. If you want a trailing new line in the output then add an extra blank line before the `{> endfn`.
+
+The function declaration has no impact on the final template as all lines are removed from the
+final text.
+
+Like in normal code, functions make it easier to deal with repeated components within your template.
+
+```
+{> fn item(name: String)
+<li class="px-2 py-1 font-bold">{{ name }}</li>
+{> endfn
+
+<ul>
+    {[ item(name: "Alice") ]}
+    {[ item(name: "Bob") ]}
+    {[ item(name: "Cary") ]}
+</ul>
+```
+
+You can use the `pub` keyword to declare the function as public in which case other modules will be
+able to import it from gleam module compiled from the template.
+
+```
+{> pub fn user_item(name: String)
+<li class="px-2 py-1 font-bold">{{ name }}</li>
+{> endfn
+```
+
+If a template only includes function declarations and no meaningful template content then matcha
+will not add the `render` and `render_builder`. Instead the module will act as a library of
+functions where each function body is a template.
+
 ## Output
 
 A template like:

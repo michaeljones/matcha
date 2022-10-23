@@ -7,7 +7,7 @@ use crate::parser::ParserError;
 use crate::renderer::RenderError;
 use crate::scanner::{Range, ScanError, Token};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Source {
     pub filename: String,
     pub contents: String,
@@ -106,6 +106,12 @@ pub fn write<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
             ParserError::UnexpectedEnd => {
                 let _ = write!(writer, "Unexpected end");
             }
+            ParserError::FunctionWithinStatement(range) => explain_with_source(
+                writer,
+                "Functions must be declared at the top level.",
+                source,
+                range,
+            ),
         },
         Error::Render(error, source) => match error {
             RenderError::DuplicateParamName(name, range) => explain_with_source(
@@ -218,6 +224,28 @@ mod test {
             r#"{> with name as String
 {> with name as String
 Hello"#
+        );
+    }
+
+    #[test]
+    fn test_function_in_for_loop_error() {
+        assert_error!(
+            r#"{% for item in list %}
+{> fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+{% endfor %}"#
+        );
+    }
+
+    #[test]
+    fn test_public_function_in_for_loop_error() {
+        assert_error!(
+            r#"{% for item in list %}
+{> pub fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+{% endfor %}"#
         );
     }
 }

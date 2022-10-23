@@ -1,0 +1,54 @@
+---
+source: src/scanner.rs
+expression: "{> fn concat(x: String, y: String) -> String\n"
+---
+[
+    (
+        OpenLine,
+        0..1,
+    ),
+    (
+        Fn,
+        3..5,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "concat(x:",
+        ),
+        6..15,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "String,",
+        ),
+        16..23,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "y:",
+        ),
+        24..26,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "String)",
+        ),
+        27..34,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "->",
+        ),
+        35..37,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "String",
+        ),
+        38..44,
+    ),
+    (
+        CloseLine,
+        44..44,
+    ),
+]
