@@ -122,7 +122,7 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                             })
                             .unwrap_or_else(|| pub_range.clone());
                         if in_statement {
-                            return Err(ParserError::FunctionWithinStatement(range.clone()));
+                            return Err(ParserError::FunctionWithinStatement(range));
                         }
                         let node = parse_function(tokens, Visibility::Public)?;
                         ast.push(node);
@@ -343,8 +343,8 @@ fn trim_trailing_newline(nodes: Vec<Node>) -> Vec<Node> {
                         } else {
                             Some(Node::Text(
                                 text.strip_suffix('\n')
-                                    .map(|str| String::from(str))
-                                    .unwrap_or(text.to_string()),
+                                    .map(String::from)
+                                    .unwrap_or_else(|| text.to_string()),
                             ))
                         }
                     }

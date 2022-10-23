@@ -5,7 +5,7 @@ pub type Position = usize;
 
 type Iter<'a> = std::iter::Peekable<GraphemeIndices<'a>>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
     Text(String),
     OpenLine,

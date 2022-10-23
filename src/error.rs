@@ -7,7 +7,7 @@ use crate::parser::ParserError;
 use crate::renderer::RenderError;
 use crate::scanner::{Range, ScanError, Token};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Source {
     pub filename: String,
     pub contents: String,
@@ -108,7 +108,7 @@ pub fn write<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
             }
             ParserError::FunctionWithinStatement(range) => explain_with_source(
                 writer,
-                &format!("Functions must be declared at the top level."),
+                "Functions must be declared at the top level.",
                 source,
                 range,
             ),

@@ -115,7 +115,7 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
                 iter.next();
                 builder_lines.push_str(&format!(
                     "    let builder = string_builder.append(builder, \"{}\")\n",
-                    text.replace("\"", "\\\"")
+                    text.replace('\"', "\\\"")
                 ));
 
                 // We have some kind of content if the text is not only whitespace. We don't need
