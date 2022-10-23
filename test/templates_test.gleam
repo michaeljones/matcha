@@ -23,6 +23,7 @@ import templates/builder
 import templates/builder_expression
 import templates/function_with_arg
 import templates/function_html
+import templates/use_pub_function
 
 import my_user.{User, NamedUser}
 
@@ -183,4 +184,7 @@ pub fn function_test() {
     <li class=\"px-2 py-1 font-bold\">Bob</li>
     <li class=\"px-2 py-1 font-bold\">Cary</li>
 </ul>\n")
+
+  use_pub_function.render()
+  |> should.equal("Hello Lucy, welcome to the test suite.\n")
 }
