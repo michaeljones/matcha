@@ -117,6 +117,9 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
                     "    let builder = string_builder.append(builder, \"{}\")\n",
                     text.replace("\"", "\\\"")
                 ));
+
+                // We have some kind of content if the text is not only whitespace. We don't need
+                // to handle this recursively as we're only interested in the top level.
                 has_template_content = has_template_content || !text.trim().is_empty();
             }
             Some(Node::Identifier(name)) => {
@@ -211,6 +214,8 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
     builder
 }}"#,
                 ));
+
+                includes_for_loop = includes_for_loop || body_context.includes_for_loop;
             }
             None => break,
         }
@@ -458,6 +463,16 @@ Hello {[ name ]}, good to meet you"
 Lucy {{ second_name }}
 {> endfn
 Hello {[ full_name("Gleam") ]}"#
+        );
+    }
+
+    #[test]
+    fn test_render_function_with_for_loop() {
+        assert_render!(
+            r#"{> fn full_name(names: List(String))
+{% for name in names %}{{ name }},{% endfor %}"
+{> endfn
+Hello {[ names("Gleam") ]}"#
         );
     }
 }
