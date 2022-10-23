@@ -1,0 +1,58 @@
+---
+source: src/scanner.rs
+expression: "{> pub fn classes() -> String\nx y\n{> endfn\n"
+---
+[
+    (
+        OpenLine,
+        0..1,
+    ),
+    (
+        Pub,
+        3..6,
+    ),
+    (
+        Fn,
+        7..9,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "classes()",
+        ),
+        10..19,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "->",
+        ),
+        20..22,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "String",
+        ),
+        23..29,
+    ),
+    (
+        CloseLine,
+        29..29,
+    ),
+    (
+        Text(
+            "x y\n",
+        ),
+        30..34,
+    ),
+    (
+        OpenLine,
+        34..35,
+    ),
+    (
+        EndFn,
+        37..42,
+    ),
+    (
+        CloseLine,
+        42..42,
+    ),
+]

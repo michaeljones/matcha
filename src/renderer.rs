@@ -1,4 +1,4 @@
-use crate::parser::Node;
+use crate::parser::{Node, Visibility};
 use crate::scanner::Range;
 
 type NodeIter<'a> = std::iter::Peekable<std::slice::Iter<'a, Node>>;
@@ -178,12 +178,16 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
 
                 includes_for_loop = true;
             }
-            Some(Node::BlockFunction(head, body_nodes, _range)) => {
+            Some(Node::BlockFunction(visiblity, head, body_nodes, _range)) => {
                 iter.next();
+                let visibility_text = match visiblity {
+                    Visibility::Private => "",
+                    Visibility::Public => "pub ",
+                };
                 let body_context = render_lines(&mut body_nodes.iter().peekable())?;
                 let body = body_context.builder_lines;
                 functions.push(format!(
-                    r#"fn {head} -> StringBuilder {{
+                    r#"{visibility_text}fn {head} -> StringBuilder {{
     let builder = string_builder.from_string("")
 {body}
     builder
@@ -401,6 +405,11 @@ Hello {[ name ]}, good to meet you"
     #[test]
     fn test_render_function() {
         assert_render!("{> fn classes()\na b c d\n{> endfn\nHello world");
+    }
+
+    #[test]
+    fn test_render_public_function() {
+        assert_render!("{> pub fn classes()\na b c d\n{> endfn\nHello world");
     }
 
     #[test]

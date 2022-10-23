@@ -4,6 +4,7 @@ expression: "{> fn full_name(second_name: String)\nLucy {{ second_name }}\n{> en
 ---
 [
     BlockFunction(
+        Private,
         "full_name(second_name: String)",
         [
             Text(

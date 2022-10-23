@@ -29,6 +29,7 @@ pub enum Token {
     In,
     Fn,
     EndFn,
+    Pub,
 }
 
 impl std::fmt::Display for Token {
@@ -56,6 +57,7 @@ impl std::fmt::Display for Token {
             Token::In => "in",
             Token::Fn => "fn",
             Token::EndFn => "endfn",
+            Token::Pub => "pub",
         };
         write!(f, "{}", str)
     }
@@ -339,6 +341,7 @@ fn to_token(identifier: &str) -> Token {
         "as" => Token::As,
         "fn" => Token::Fn,
         "endfn" => Token::EndFn,
+        "pub" => Token::Pub,
         other => Token::IdentifierOrGleamToken(other.to_string()),
     }
 }
@@ -552,5 +555,10 @@ mod test {
     #[test]
     fn test_scan_function_whole() {
         assert_scan!("{> fn classes() -> String\nx y\n{> endfn\n");
+    }
+
+    #[test]
+    fn test_scan_pub_function_whole() {
+        assert_scan!("{> pub fn classes() -> String\nx y\n{> endfn\n");
     }
 }

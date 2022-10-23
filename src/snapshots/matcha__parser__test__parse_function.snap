@@ -4,6 +4,7 @@ expression: "{> fn classes()\na b c d\n{> endfn\n"
 ---
 [
     BlockFunction(
+        Private,
         "classes()",
         [
             Text(

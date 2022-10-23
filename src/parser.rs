@@ -13,7 +13,7 @@ pub enum Node {
     For(String, Option<Type>, String, Vec<Node>),
     Import(String),
     With((String, Range), Type),
-    BlockFunction(String, Vec<Node>, Range),
+    BlockFunction(Visibility, String, Vec<Node>, Range),
 }
 
 #[derive(Debug)]
@@ -21,6 +21,12 @@ pub enum ParserError {
     UnexpectedToken(Token, Range, Vec<Token>),
     UnexpectedEnd,
     FunctionWithinStatement(Range),
+}
+
+#[derive(Debug)]
+pub enum Visibility {
+    Public,
+    Private,
 }
 
 pub fn parse(tokens: &mut TokenIter) -> Result<Vec<Node>, ParserError> {
@@ -104,12 +110,22 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
                             return Err(ParserError::FunctionWithinStatement(range.clone()));
                         }
 
-                        let (head, range) = extract_code(tokens)?;
-                        consume_token(tokens, Token::CloseLine, false)?;
-                        let body = parse_inner(tokens, true)?;
-                        let body = trim_trailing_newline(body);
-                        consume_token(tokens, Token::EndFn, false)?;
-                        ast.push(Node::BlockFunction(head, body, range))
+                        let node = parse_function(tokens, Visibility::Private)?;
+                        ast.push(node);
+                    }
+                    Some((Token::Pub, pub_range)) => {
+                        let fn_range = consume_token(tokens, Token::Fn, false)?;
+                        let range = fn_range
+                            .map(|range| Range {
+                                start: std::cmp::min(range.start, pub_range.start),
+                                end: std::cmp::max(range.end, pub_range.end),
+                            })
+                            .unwrap_or_else(|| pub_range.clone());
+                        if in_statement {
+                            return Err(ParserError::FunctionWithinStatement(range.clone()));
+                        }
+                        let node = parse_function(tokens, Visibility::Public)?;
+                        ast.push(node);
                     }
                     _ => {}
                 }
@@ -129,6 +145,16 @@ fn parse_inner(tokens: &mut TokenIter, in_statement: bool) -> Result<Vec<Node>, 
     }
 
     Ok(ast)
+}
+
+fn parse_function(tokens: &mut TokenIter, visibility: Visibility) -> Result<Node, ParserError> {
+    let (head, range) = extract_code(tokens)?;
+    consume_token(tokens, Token::CloseLine, false)?;
+    let body = parse_inner(tokens, true)?;
+    let body = trim_trailing_newline(body);
+    consume_token(tokens, Token::EndFn, false)?;
+
+    Ok(Node::BlockFunction(visibility, head, body, range))
 }
 
 fn parse_if_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
@@ -278,10 +304,10 @@ fn consume_token(
     tokens: &mut TokenIter,
     expected_token: Token,
     accept_end: bool,
-) -> Result<(), ParserError> {
+) -> Result<Option<Range>, ParserError> {
     log::trace!("consume_token: {:?}", expected_token);
     match tokens.next() {
-        Some((matched_token, _)) if *matched_token == expected_token => Ok(()),
+        Some((matched_token, range)) if *matched_token == expected_token => Ok(Some(range.clone())),
         Some((matched_token, range)) => Err(ParserError::UnexpectedToken(
             matched_token.clone(),
             range.clone(),
@@ -289,7 +315,7 @@ fn consume_token(
         )),
         None => {
             if accept_end {
-                Ok(())
+                Ok(None)
             } else {
                 log::error!(
                     "consume_token - found: None, expected_token: {:?}",
@@ -472,6 +498,11 @@ mod test {
     #[test]
     fn test_parse_function_with_trailing_new_line() {
         assert_parse!("{> fn classes()\na b c d\n\n{> endfn\n");
+    }
+
+    #[test]
+    fn test_parse_public_function() {
+        assert_parse!("{> pub fn classes()\na b c d\n{> endfn\n");
     }
 
     #[test]

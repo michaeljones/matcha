@@ -1,14 +1,14 @@
 ---
 source: src/parser.rs
-expression: "{> fn classes()\na b c d\n\n{> endfn\n"
+expression: "{> pub fn classes()\na b c d\n{> endfn\n"
 ---
 [
     BlockFunction(
-        Private,
+        Public,
         "classes()",
         [
             Text(
-                "a b c d\n",
+                "a b c d",
             ),
         ],
         0..0,

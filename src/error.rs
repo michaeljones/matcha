@@ -237,4 +237,15 @@ Lucy {{ second_name }}
 {% endfor %}"#
         );
     }
+
+    #[test]
+    fn test_public_function_in_for_loop_error() {
+        assert_error!(
+            r#"{% for item in list %}
+{> pub fn full_name(second_name: String)
+Lucy {{ second_name }}
+{> endfn
+{% endfor %}"#
+        );
+    }
 }
