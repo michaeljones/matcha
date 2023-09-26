@@ -83,9 +83,6 @@ in the rendered template and so it more efficient for inserting content that is 
 ### If
 
 You can use `{% %}` blocks to create an if-statement using the `if`, `else` and `endif` keywords.
-The function generated from the template will have a labelled argument matching the identifier used
-after `if`.
-
 The `else` is optional.
 
 ```jinja
@@ -95,9 +92,7 @@ The `else` is optional.
 
 ### For
 
-You can use `{% %}` blocks to create for-loops using the `for`, `in` and `endfor` keywords.  The
-function generated from the template will have a labelled argument matching the identifier used
-after `in`.
+You can use `{% %}` blocks to create for-loops using the `for`, `in` and `endfor` keywords.
 
 ```html+jinja
 {> with list as List(String)
