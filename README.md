@@ -11,6 +11,15 @@ parameters.
 Matcha is basic but currently feature complete and well tested. If the repository looks inactive it
 is because it is stable.
 
+## Recommended Usage
+
+Template languages like Matcha are useful to have in general and are particularly useful for generating unstructured
+text. Matcha generates well typed code that avoids issues that some more dynamic templating systems have.
+
+That said, if you're planning to generate structured output, it is sensible to use a better suited approach. For data
+formats, this should be serialization and deserialization libraries. For formats like HTML, you would likely be better
+using a library like [nakai](https://github.com/nakaixo/nakai).
+
 ## Installation
 
 Download pre-built binaries for the latest release from the
