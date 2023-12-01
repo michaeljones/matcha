@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.17.0
+
+- Changed to use `type` keyword in `StringBuilder` import in the generated Gleam code as suits recent
+  versions of the Gleam compiler.
+
 ## 0.16.0
 
 - Support `{> fn` and `{> pub fn` syntax for declaring private and public functions within the
