@@ -1,8 +1,6 @@
 import gleam/string_builder
-
 import gleeunit
 import gleeunit/should
-
 import templates/identifier
 import templates/two_identifiers
 import templates/double_identifier_usage
@@ -24,8 +22,7 @@ import templates/builder_expression
 import templates/function_with_arg
 import templates/function_html
 import templates/use_pub_function
-
-import my_user.{User, NamedUser}
+import my_user.{NamedUser, User}
 
 pub fn main() {
   gleeunit.main()
@@ -113,7 +110,9 @@ pub fn nested_if_statement_test() {
 
 pub fn for_loop_test() {
   for_loop.render(["Anna", "Bill", "Christine"])
-  |> should.equal("Hello, to Anna and to Bill and to Christine and everyone else\n")
+  |> should.equal(
+    "Hello, to Anna and to Bill and to Christine and everyone else\n",
+  )
 
   for_loop.render([])
   |> should.equal("Hello, everyone else\n")
@@ -125,13 +124,20 @@ pub fn for_as_loop_test() {
 }
 
 pub fn for_loop_from_expression_test() {
-  for_loop_from_expression.render(users: [NamedUser("Anna"), NamedUser("Bill"), NamedUser("Christine")], limit: 2)
+  for_loop_from_expression.render(
+    users: [NamedUser("Anna"), NamedUser("Bill"), NamedUser("Christine")],
+    limit: 2,
+  )
   |> should.equal("Hello, to Anna and to Bill and everyone else\n")
 }
 
 pub fn value_in_for_loop_test() {
-  value_in_for_loop.render(greeting: "Hello", my_list: ["Anna", "Bill", "Christine"])
-  |> should.equal("<h1>My List</h1>
+  value_in_for_loop.render(
+    greeting: "Hello",
+    my_list: ["Anna", "Bill", "Christine"],
+  )
+  |> should.equal(
+    "<h1>My List</h1>
 <ul>
 
     <li>Hello Anna</li>
@@ -141,7 +147,8 @@ pub fn value_in_for_loop_test() {
     <li>Hello Christine</li>
 
 </ul>
-")
+",
+  )
 }
 
 pub fn dot_access_test() {
@@ -156,7 +163,8 @@ pub fn dot_access_test() {
 
 pub fn multiline_test() {
   multiline.render(["Anna", "Bill", "Christine"])
-  |> should.equal("<h1>My List</h1>
+  |> should.equal(
+    "<h1>My List</h1>
 <ul>
 
     <li>Anna</li>
@@ -166,7 +174,8 @@ pub fn multiline_test() {
     <li>Christine</li>
 
 </ul>
-")
+",
+  )
 }
 
 pub fn quote_test() {
@@ -179,11 +188,13 @@ pub fn function_test() {
   |> should.equal("Hello Lucy Gleam\n")
 
   function_html.render()
-  |> should.equal("<ul>
+  |> should.equal(
+    "<ul>
     <li class=\"px-2 py-1 font-bold\">Alice</li>
     <li class=\"px-2 py-1 font-bold\">Bob</li>
     <li class=\"px-2 py-1 font-bold\">Cary</li>
-</ul>\n")
+</ul>\n",
+  )
 
   use_pub_function.render()
   |> should.equal("Hello Lucy, welcome to the test suite.\n")

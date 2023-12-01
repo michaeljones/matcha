@@ -1,5 +1,4 @@
-{> import gleam/list
-{> import my_user.{NamedUser}
+{> import my_user.{type NamedUser}
 {> with users as List(NamedUser)
 {> with limit as Int
 Hello,{% for user as NamedUser in list.take(users, limit) %} to {{ user.name }} and{% endfor %} everyone else
