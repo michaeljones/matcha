@@ -59,6 +59,21 @@ fn color_choice() -> ColorChoice {
     }
 }
 
+fn requires_update(matcha_path: &std::path::Path) -> bool {
+    let matcha_meta = std::fs::metadata(matcha_path).unwrap();
+    let matcha_time = matcha_meta.modified().unwrap();
+
+    let gleam_path = matcha_path.with_extension("gleam");
+    let gleam_meta = std::fs::metadata(gleam_path).unwrap();
+    let gleam_time = gleam_meta.modified().unwrap();
+
+    if let Ok(_duration) = matcha_time.duration_since(gleam_time) {
+        true
+    } else {
+        false
+    }
+}
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "matcha", about = "Compiles templates into Gleam modules")]
 struct Opt {
@@ -86,10 +101,17 @@ fn main() {
             let path = entry.path();
 
             if path.extension() == Some(std::ffi::OsStr::new("matcha")) {
-                if opt.verbose {
-                    println!("Converting {}", path.display());
+                if requires_update(path) {
+                    if opt.verbose {
+                        println!("Converting {}", path.display());
+                    }
+                    Some(convert(NAME, path))
+                } else {
+                    if opt.verbose {
+                        println!("Skipping {}, not modified", path.display());
+                    }
+                    None
                 }
-                Some(convert(NAME, path))
             } else {
                 None
             }
