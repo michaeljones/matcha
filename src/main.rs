@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
+use clap::Parser;
 use codespan_reporting::term::termcolor::{self, ColorChoice, StandardStream};
-use structopt::StructOpt;
 use walkdir::WalkDir;
 
 mod error;
@@ -79,13 +79,13 @@ fn requires_update(matcha_path: &std::path::Path) -> bool {
     matcha_time > gleam_time
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "matcha", about = "Compiles templates into Gleam modules")]
+#[derive(Debug, Parser)]
+#[clap(name = "matcha", about = "Compiles templates into Gleam modules")]
 struct Opt {
-    #[structopt(short, long)]
+    #[arg(short, long)]
     verbose: bool,
 
-    #[structopt(long)]
+    #[arg(long)]
     version: bool,
 }
 
@@ -93,7 +93,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     if opt.version {
         println!("{}", VERSION);
         return;

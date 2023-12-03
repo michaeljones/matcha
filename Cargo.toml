@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 atty = "0.2.14"
+clap = { version = "4.4.10", features = ["derive"] }
 codespan-reporting = "0.11.1"
 env_logger = "0.9.0"
 insta = "1.9.0"
 log = "0.4.14"
-structopt = "0.3.25"
 unicode-segmentation = "1.8.0"
 walkdir = "2.3.2"
