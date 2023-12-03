@@ -11,7 +11,7 @@ mod scanner;
 
 use error::{Error, Source};
 
-fn convert(prog_name: &str, file_path: &std::path::Path) -> Result<(), ()> {
+fn parse_generate_and_write(program_name: &str, file_path: &std::path::Path) -> Result<(), ()> {
     let out_file_path = file_path.with_extension("gleam");
     let from_file_name = file_path
         .file_name()
@@ -32,7 +32,7 @@ fn convert(prog_name: &str, file_path: &std::path::Path) -> Result<(), ()> {
                         .map_err(|error| Error::Parse(error, source.clone()))
                 })
                 .and_then(|ast| {
-                    renderer::render(&mut ast.iter().peekable(), prog_name, &from_file_name)
+                    renderer::render(&mut ast.iter().peekable(), program_name, &from_file_name)
                         .map_err(|error| Error::Render(error, source.clone()))
                 })
         })
@@ -90,7 +90,7 @@ struct Opt {
 }
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-const NAME: &str = env!("CARGO_PKG_NAME");
+const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
 fn main() {
     let opt = Opt::from_args();
@@ -110,7 +110,7 @@ fn main() {
                     if opt.verbose {
                         println!("Converting {}", path.display());
                     }
-                    Some(convert(NAME, path))
+                    Some(parse_generate_and_write(PROGRAM_NAME, path))
                 } else {
                     if opt.verbose {
                         println!("Skipping {}, not modified", path.display());
