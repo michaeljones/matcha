@@ -60,18 +60,23 @@ fn color_choice() -> ColorChoice {
 }
 
 fn requires_update(matcha_path: &std::path::Path) -> bool {
-    let matcha_meta = std::fs::metadata(matcha_path).unwrap();
-    let matcha_time = matcha_meta.modified().unwrap();
+    let matcha_result = std::fs::metadata(matcha_path).and_then(|data| data.modified());
+
+    // If we fail to get the modified time for any reason than assume we have to update
+    let Ok(matcha_time) = matcha_result else {
+        return true;
+    };
 
     let gleam_path = matcha_path.with_extension("gleam");
-    let gleam_meta = std::fs::metadata(gleam_path).unwrap();
-    let gleam_time = gleam_meta.modified().unwrap();
+    let gleam_result = std::fs::metadata(gleam_path).and_then(|data| data.modified());
 
-    if let Ok(_duration) = matcha_time.duration_since(gleam_time) {
-        true
-    } else {
-        false
-    }
+    // If we fail to get the modified time for any reason than assume we have to update
+    let Ok(gleam_time) = gleam_result else {
+        return true;
+    };
+
+    // Should update the gleam file if the matcha file is newer than it
+    matcha_time > gleam_time
 }
 
 #[derive(Debug, StructOpt)]
