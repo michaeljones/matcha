@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.18.0
+
+- Changed to only generating the `.gleam` output if the `.matcha` file has a newer modified timestamp than the `.gleam`
+  file. This avoids constantly regenerating the output files which in turn avoids messing up the formatting if the
+  output file had been formatted.
+
+  Thank you to @perrygeo for noticing and fixing the issue.
+
+- Switched from `structopt` to `clap` for command line options parsing. This should be transparent to the user.
+
 ## 0.17.0
 
 - Changed to use `type` keyword in `StringBuilder` import in the generated Gleam code as suits recent
