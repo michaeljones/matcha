@@ -80,7 +80,8 @@ fn requires_update(matcha_path: &std::path::Path) -> bool {
 }
 
 #[derive(Debug, Parser)]
-#[clap(name = "matcha", about = "Compiles templates into Gleam modules")]
+// Plain styling as I prefer it (no underlines on the help headings)
+#[clap(name = "matcha", about = "Compiles templates into Gleam modules", styles = clap::builder::Styles::plain())]
 struct Opt {
     #[arg(short, long)]
     verbose: bool,
