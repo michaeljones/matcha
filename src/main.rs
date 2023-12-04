@@ -59,6 +59,26 @@ fn color_choice() -> ColorChoice {
     }
 }
 
+fn requires_update(matcha_path: &std::path::Path) -> bool {
+    let matcha_result = std::fs::metadata(matcha_path).and_then(|data| data.modified());
+
+    // If we fail to get the modified time for any reason than assume we have to update
+    let Ok(matcha_time) = matcha_result else {
+        return true;
+    };
+
+    let gleam_path = matcha_path.with_extension("gleam");
+    let gleam_result = std::fs::metadata(gleam_path).and_then(|data| data.modified());
+
+    // If we fail to get the modified time for any reason than assume we have to update
+    let Ok(gleam_time) = gleam_result else {
+        return true;
+    };
+
+    // Should update the gleam file if the matcha file is newer than it
+    matcha_time > gleam_time
+}
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "matcha", about = "Compiles templates into Gleam modules")]
 struct Opt {
@@ -86,10 +106,17 @@ fn main() {
             let path = entry.path();
 
             if path.extension() == Some(std::ffi::OsStr::new("matcha")) {
-                if opt.verbose {
-                    println!("Converting {}", path.display());
+                if requires_update(path) {
+                    if opt.verbose {
+                        println!("Converting {}", path.display());
+                    }
+                    Some(convert(NAME, path))
+                } else {
+                    if opt.verbose {
+                        println!("Skipping {}, not modified", path.display());
+                    }
+                    None
                 }
-                Some(convert(NAME, path))
             } else {
                 None
             }
