@@ -18,7 +18,8 @@ text. Matcha generates well typed code that avoids issues that some more dynamic
 
 That said, if you're planning to generate structured output, it is sensible to use a better suited approach. For data
 formats, this should be serialization and deserialization libraries. For formats like HTML, you would likely be better
-using a library like [nakai](https://github.com/nakaixo/nakai).
+using a library like [lustre](https://hexdocs.pm/lustre/lustre/element.html#to_string_builder) or
+[nakai](https://github.com/nakaixo/nakai).
 
 ## Installation
 
