@@ -5,7 +5,7 @@ version = "0.1.0"
 licences = ["MIT"]
 
 [dependencies]
-gleam_stdlib = "~> 0.33"
+gleam_stdlib = ">= 0.38.0 and < 1.0.0"
 
 [dev-dependencies]
-gleeunit = "~> 1.0"
+gleeunit = ">= 1.2.0 and < 2.0.0"
