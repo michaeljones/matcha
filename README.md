@@ -117,8 +117,8 @@ Additionally you can use the `as` keyword to associate a type with the items bei
 This is necessary if you're using a complex object.
 
 ```html+jinja
-{> import organisation.{Organisation}
-{> import membership.{Member}
+{> import organisation.{type Organisation}
+{> import membership.{type Member}
 {> with org as Organisation
 <ul>
 {% for user as Member in organisation.members %}
@@ -133,7 +133,7 @@ You can use the `{>` syntax to add import statements to the template. These are 
 to use with the `with` syntax below to help Gleam check variables used in the template.
 
 ```
-{> import my_user.{MyUser}
+{> import my_user.{type MyUser}
 ```
 
 ### Functions
@@ -186,7 +186,7 @@ functions where each function body is a template.
 A template like:
 
 ```
-{> import my_user.{User}
+{> import my_user.{type User}
 {> with user_obj as User
 Hello{% if user_obj.is_admin %} Admin{% endif %}
 ```
