@@ -1,2 +1,3 @@
+/build
 /target
 /test/templates/*.gleam
