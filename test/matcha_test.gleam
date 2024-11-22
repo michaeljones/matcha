@@ -1,28 +1,28 @@
 import gleam/string_builder
 import gleeunit
 import gleeunit/should
-import templates/identifier
-import templates/two_identifiers
-import templates/double_identifier_usage
-import templates/if_statement
-import templates/if_else_statement
-import templates/if_comparison
-import templates/nested_if_statement
-import templates/for_loop
-import templates/for_as_loop
-import templates/for_loop_from_expression
-import templates/dot_access
-import templates/multiline
-import templates/value_in_for_loop
-import templates/value_in_if_else
-import templates/value_expression
-import templates/quote
+import my_user.{NamedUser, User}
 import templates/builder
 import templates/builder_expression
-import templates/function_with_arg
+import templates/dot_access
+import templates/double_identifier_usage
+import templates/for_as_loop
+import templates/for_loop
+import templates/for_loop_from_expression
 import templates/function_html
+import templates/function_with_arg
+import templates/identifier
+import templates/if_comparison
+import templates/if_else_statement
+import templates/if_statement
+import templates/multiline
+import templates/nested_if_statement
+import templates/quote
+import templates/two_identifiers
 import templates/use_pub_function
-import my_user.{NamedUser, User}
+import templates/value_expression
+import templates/value_in_for_loop
+import templates/value_in_if_else
 
 pub fn main() {
   gleeunit.main()
