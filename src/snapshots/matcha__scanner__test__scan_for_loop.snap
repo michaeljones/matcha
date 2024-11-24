@@ -18,7 +18,7 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         9..12,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "item",
         ),
         13..17,
@@ -28,7 +28,7 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         18..20,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "list",
         ),
         21..25,
@@ -42,7 +42,7 @@ expression: "Hello {% for item in list %}{{ item }}{% endfor %}"
         28..29,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "item",
         ),
         31..35,

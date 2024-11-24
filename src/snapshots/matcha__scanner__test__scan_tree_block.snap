@@ -1,7 +1,6 @@
 ---
 source: src/scanner.rs
 expression: "Hello {[ tree ]}, good to meet you"
-snapshot_kind: text
 ---
 [
     (
@@ -15,7 +14,7 @@ snapshot_kind: text
         6..7,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "tree",
         ),
         9..13,

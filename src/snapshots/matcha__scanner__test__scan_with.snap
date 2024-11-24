@@ -12,7 +12,7 @@ expression: "{> with user as User\n{{ user }}"
         3..7,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "user",
         ),
         8..12,
@@ -22,7 +22,7 @@ expression: "{> with user as User\n{{ user }}"
         13..15,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "User",
         ),
         16..20,
@@ -36,7 +36,7 @@ expression: "{> with user as User\n{{ user }}"
         21..22,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "user",
         ),
         24..28,

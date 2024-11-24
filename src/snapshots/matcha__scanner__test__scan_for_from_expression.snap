@@ -18,7 +18,7 @@ expression: "Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endf
         9..12,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "item",
         ),
         13..17,
@@ -28,7 +28,7 @@ expression: "Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endf
         18..20,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "Item",
         ),
         21..25,
@@ -38,13 +38,13 @@ expression: "Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endf
         26..28,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "list.take(list,",
         ),
         29..44,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "2)",
         ),
         45..47,
@@ -58,7 +58,7 @@ expression: "Hello {% for item as Item in list.take(list, 2) %}{{ item }}{% endf
         50..51,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "item",
         ),
         53..57,

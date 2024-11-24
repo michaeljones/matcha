@@ -230,11 +230,11 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 fn extract_identifier(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
-        Some((Token::IdentifierOrGleamToken(name), range)) => Ok((name.clone(), range.clone())),
+        Some((Token::GleamTokenOrIdentifier(name), range)) => Ok((name.clone(), range.clone())),
         Some((token, range)) => Err(ParserError::UnexpectedToken(
             token.clone(),
             range.clone(),
-            vec![Token::IdentifierOrGleamToken("".to_string())],
+            vec![Token::GleamTokenOrIdentifier("".to_string())],
         )),
         None => Err(ParserError::UnexpectedEnd),
     }
@@ -247,7 +247,7 @@ fn extract_code(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> 
 
     loop {
         match tokens.peek() {
-            Some((Token::IdentifierOrGleamToken(name), token_range)) => {
+            Some((Token::GleamTokenOrIdentifier(name), token_range)) => {
                 // Create range and expand it to include all the tokens
                 // that we're adding to this string
                 range = range
@@ -274,7 +274,7 @@ fn extract_code(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> 
                     return Err(ParserError::UnexpectedToken(
                         token.clone(),
                         range.clone(),
-                        vec![Token::IdentifierOrGleamToken("".to_string())],
+                        vec![Token::GleamTokenOrIdentifier("".to_string())],
                     ));
                 } else {
                     break;
