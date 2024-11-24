@@ -16,19 +16,19 @@ expression: "{> pub fn classes() -> String\nx y\n{> endfn\n"
         7..9,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "classes()",
         ),
         10..19,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "->",
         ),
         20..22,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "String",
         ),
         23..29,

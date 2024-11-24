@@ -12,37 +12,37 @@ expression: "{> fn concat(x: String, y: String) -> String\n"
         3..5,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "concat(x:",
         ),
         6..15,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "String,",
         ),
         16..23,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "y:",
         ),
         24..26,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "String)",
         ),
         27..34,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "->",
         ),
         35..37,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "String",
         ),
         38..44,

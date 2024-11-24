@@ -53,7 +53,7 @@ pub fn write<W: termcolor::WriteColor>(writer: &mut W, error: Error) {
         },
         Error::Parse(error, source) => match error {
             ParserError::UnexpectedToken(token, range, expected) => match token {
-                Token::IdentifierOrGleamToken(name) => explain_with_source(
+                Token::GleamTokenOrIdentifier(name) => explain_with_source(
                     writer,
                     &format!("Unexpected token: {}", name),
                     source,

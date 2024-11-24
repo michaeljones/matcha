@@ -230,11 +230,11 @@ fn parse_for_statement(tokens: &mut TokenIter) -> Result<Node, ParserError> {
 fn extract_identifier(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> {
     log::trace!("extract_identifier");
     match tokens.next() {
-        Some((Token::IdentifierOrGleamToken(name), range)) => Ok((name.clone(), range.clone())),
+        Some((Token::GleamTokenOrIdentifier(name), range)) => Ok((name.clone(), range.clone())),
         Some((token, range)) => Err(ParserError::UnexpectedToken(
             token.clone(),
             range.clone(),
-            vec![Token::IdentifierOrGleamToken("".to_string())],
+            vec![Token::GleamTokenOrIdentifier("".to_string())],
         )),
         None => Err(ParserError::UnexpectedEnd),
     }
@@ -247,7 +247,7 @@ fn extract_code(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> 
 
     loop {
         match tokens.peek() {
-            Some((Token::IdentifierOrGleamToken(name), token_range)) => {
+            Some((Token::GleamTokenOrIdentifier(name), token_range)) => {
                 // Create range and expand it to include all the tokens
                 // that we're adding to this string
                 range = range
@@ -274,7 +274,7 @@ fn extract_code(tokens: &mut TokenIter) -> Result<(String, Range), ParserError> 
                     return Err(ParserError::UnexpectedToken(
                         token.clone(),
                         range.clone(),
-                        vec![Token::IdentifierOrGleamToken("".to_string())],
+                        vec![Token::GleamTokenOrIdentifier("".to_string())],
                     ));
                 } else {
                     break;
@@ -366,7 +366,10 @@ mod test {
 
     use super::*;
 
+    // Our only use of this is the Debug output but the compiler's dead code analysis ignores
+    // Debug usage so we have to allow dead_code here
     #[derive(Debug)]
+    #[expect(dead_code)]
     pub enum Error {
         Scan(ScanError),
         Parse(ParserError),
@@ -481,13 +484,13 @@ mod test {
     }
 
     #[test]
-    fn test_parse_builder_block() {
+    fn test_parse_tree_block() {
         assert_parse!("Hello {[ name ]}, good to meet you");
     }
 
     #[test]
-    fn test_parse_builder_expression() {
-        assert_parse!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    fn test_parse_tree_expression() {
+        assert_parse!("Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 
     #[test]

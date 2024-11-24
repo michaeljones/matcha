@@ -1,1 +1,0 @@
-Hello {[ string_builder.from_strings(["Anna", " and ", "Bob"]) ]}, good to meet you

@@ -14,7 +14,7 @@ expression: "Hello {{ string.uppercase(name) }}, good to meet you"
         6..7,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "string.uppercase(name)",
         ),
         9..31,

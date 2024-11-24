@@ -14,7 +14,7 @@ pub enum Token {
     CloseValue,
     OpenBuilder,
     CloseBuilder,
-    IdentifierOrGleamToken(String),
+    GleamTokenOrIdentifier(String),
     Import,
     ImportDetails(String),
     With,
@@ -44,7 +44,7 @@ impl std::fmt::Display for Token {
             Token::CloseBuilder => "]}",
             Token::OpenStmt => "{%",
             Token::CloseStmt => "%}",
-            Token::IdentifierOrGleamToken(name) => name,
+            Token::GleamTokenOrIdentifier(name) => name,
             Token::Import => "import",
             Token::ImportDetails(_) => "import-details",
             Token::With => "with",
@@ -342,7 +342,7 @@ fn to_token(identifier: &str) -> Token {
         "fn" => Token::Fn,
         "endfn" => Token::EndFn,
         "pub" => Token::Pub,
-        other => Token::IdentifierOrGleamToken(other.to_string()),
+        other => Token::GleamTokenOrIdentifier(other.to_string()),
     }
 }
 
@@ -528,13 +528,13 @@ mod test {
     }
 
     #[test]
-    fn test_scan_builder_block() {
-        assert_scan!("Hello {[ builder ]}, good to meet you");
+    fn test_scan_tree_block() {
+        assert_scan!("Hello {[ tree ]}, good to meet you");
     }
 
     #[test]
-    fn test_scan_builder_expression() {
-        assert_scan!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+    fn test_scan_tree_expression() {
+        assert_scan!("Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 
     #[test]

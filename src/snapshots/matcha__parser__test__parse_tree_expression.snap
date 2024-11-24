@@ -1,0 +1,16 @@
+---
+source: src/parser.rs
+expression: "Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you"
+snapshot_kind: text
+---
+[
+    Text(
+        "Hello ",
+    ),
+    Builder(
+        "string_tree.from_strings([\"Anna\", \" and \", \"Bob\"])",
+    ),
+    Text(
+        ", good to meet you",
+    ),
+]

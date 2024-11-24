@@ -1,0 +1,2 @@
+{> with name_ as StringTree
+Hello {[ name_ ]}, good to meet you

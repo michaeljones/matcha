@@ -12,19 +12,19 @@ expression: "{> fn classes() -> String\nx y\n{> endfn\n"
         3..5,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "classes()",
         ),
         6..15,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "->",
         ),
         16..18,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "String",
         ),
         19..25,

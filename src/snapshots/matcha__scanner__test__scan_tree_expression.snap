@@ -1,7 +1,6 @@
 ---
 source: src/scanner.rs
 expression: "Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you"
-snapshot_kind: text
 ---
 [
     (
@@ -15,31 +14,31 @@ snapshot_kind: text
         6..7,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "string_tree.from_strings([\"Anna\",",
         ),
         9..42,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "\"",
         ),
         43..44,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "and",
         ),
         45..48,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "\",",
         ),
         49..51,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "\"Bob\"])",
         ),
         52..59,

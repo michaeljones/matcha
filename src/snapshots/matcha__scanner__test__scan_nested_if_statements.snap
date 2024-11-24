@@ -18,7 +18,7 @@ expression: "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif 
         9..11,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "is_user",
         ),
         12..19,
@@ -36,7 +36,7 @@ expression: "Hello {% if is_user %}{% if is_admin %}Admin{% else %}User{% endif 
         25..27,
     ),
     (
-        IdentifierOrGleamToken(
+        GleamTokenOrIdentifier(
             "is_admin",
         ),
         28..36,

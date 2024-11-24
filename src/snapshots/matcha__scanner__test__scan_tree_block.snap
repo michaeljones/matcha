@@ -1,6 +1,6 @@
 ---
 source: src/scanner.rs
-expression: "Hello {[ builder ]}, good to meet you"
+expression: "Hello {[ tree ]}, good to meet you"
 ---
 [
     (
@@ -14,19 +14,19 @@ expression: "Hello {[ builder ]}, good to meet you"
         6..7,
     ),
     (
-        IdentifierOrGleamToken(
-            "builder",
+        GleamTokenOrIdentifier(
+            "tree",
         ),
-        9..16,
+        9..13,
     ),
     (
         CloseBuilder,
-        17..18,
+        14..15,
     ),
     (
         Text(
             ", good to meet you",
         ),
-        19..36,
+        16..33,
     ),
 ]
