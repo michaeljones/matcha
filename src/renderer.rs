@@ -61,14 +61,14 @@ pub fn render(
     let render_functions = if context.has_template_content {
         format!(
             r#"
-pub fn render_builder({params_string}) -> StringTree {{
+pub fn render_tree({params_string}) -> StringTree {{
     let builder = string_tree.from_string("")
 {builder_lines}
     builder
 }}
 
 pub fn render({params_string}) -> String {{
-    string_tree.to_string(render_builder({args_string}))
+    string_tree.to_string(render_tree({args_string}))
 }}
 "#,
             params_string = params_string,
@@ -414,7 +414,7 @@ Hello{% if user.is_admin %} Admin{% endif %}"
     }
 
     #[test]
-    fn test_render_builder_block() {
+    fn test_render_tree_block() {
         assert_render!(
             "{> with name as StringTree
 Hello {[ name ]}, good to meet you"
@@ -422,7 +422,7 @@ Hello {[ name ]}, good to meet you"
     }
 
     #[test]
-    fn test_render_builder_expression() {
+    fn test_render_tree_expression() {
         assert_render!("Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 

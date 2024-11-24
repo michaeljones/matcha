@@ -9,7 +9,7 @@ import gleam/string_tree.{type StringTree}
 
 
 
-pub fn render_builder(is_user is_user: Bool) -> StringTree {
+pub fn render_tree(is_user is_user: Bool) -> StringTree {
     let builder = string_tree.from_string("")
     let builder = string_tree.append(builder, "Hello ")
     let builder = case is_user {
@@ -28,5 +28,5 @@ pub fn render_builder(is_user is_user: Bool) -> StringTree {
 }
 
 pub fn render(is_user is_user: Bool) -> String {
-    string_tree.to_string(render_builder(is_user: is_user))
+    string_tree.to_string(render_tree(is_user: is_user))
 }

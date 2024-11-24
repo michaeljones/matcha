@@ -45,7 +45,7 @@ files it finds.
 
 Template files should have a `.matcha` extension. Templates are compiled into `.gleam` files that can
 be imported like any other regular module. The modules expose a `render` function, that returns a
-`String`, and `render_builder` function that returns a `StringTree`.
+`String`, and `render_tree` function that returns a `StringTree`.
 
 Some errors, mostly syntax, will be picked up by the Rust code but it is possible to generate
 invalid modules and so the Gleam compiler will pick up further errors.
@@ -178,7 +178,7 @@ able to import it from gleam module compiled from the template.
 ```
 
 If a template only includes function declarations and no meaningful template content then matcha
-will not add the `render` and `render_builder`. Instead the module will act as a library of
+will not add the `render` and `render_tree`. Instead the module will act as a library of
 functions where each function body is a template.
 
 ## Output
@@ -198,7 +198,7 @@ import gleam/string_tree.{StringTree}
 import gleam/list
 import my_user.{User}
 
-pub fn render_builder(user_obj user_obj: User) -> StringTree {
+pub fn render_tree(user_obj user_obj: User) -> StringTree {
   let builder = string_tree.from_string("")
   let builder = string_tree.append(builder, "Hello")
   let builder = case user_obj.is_admin {
@@ -215,11 +215,11 @@ pub fn render_builder(user_obj user_obj: User) -> StringTree {
 }
 
 pub fn render(user_obj user_obj: User) -> String {
-  string_tree.to_string(render_builder(user_obj: user_obj))
+  string_tree.to_string(render_tree(user_obj: user_obj))
 }
 ```
 
-Which you can import and call `render` or `render_builder` on with the appropriate arguments.
+Which you can import and call `render` or `render_tree` on with the appropriate arguments.
 
 ## Tests
 
