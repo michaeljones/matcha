@@ -528,12 +528,12 @@ mod test {
     }
 
     #[test]
-    fn test_scan_builder_block() {
-        assert_scan!("Hello {[ builder ]}, good to meet you");
+    fn test_scan_tree_block() {
+        assert_scan!("Hello {[ tree ]}, good to meet you");
     }
 
     #[test]
-    fn test_scan_builder_expression() {
+    fn test_scan_tree_expression() {
         assert_scan!("Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 

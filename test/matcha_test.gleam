@@ -2,8 +2,6 @@ import gleam/string_tree
 import gleeunit
 import gleeunit/should
 import my_user.{NamedUser, User}
-import templates/builder
-import templates/builder_expression
 import templates/dot_access
 import templates/double_identifier_usage
 import templates/for_as_loop
@@ -18,6 +16,8 @@ import templates/if_statement
 import templates/multiline
 import templates/nested_if_statement
 import templates/quote
+import templates/tree
+import templates/tree_expression
 import templates/two_identifiers
 import templates/use_pub_function
 import templates/value_expression
@@ -54,14 +54,14 @@ pub fn double_identifier_usage_test() {
   |> should.equal("Double usage, Double usage\n")
 }
 
-pub fn builder_block_test() {
-  let name_builder = string_tree.from_strings(["Anna", " ", "Bandana"])
-  builder.render(name_builder)
+pub fn tree_block_test() {
+  let name_tree = string_tree.from_strings(["Anna", " ", "Bandana"])
+  tree.render(name_tree)
   |> should.equal("Hello Anna Bandana, good to meet you\n")
 }
 
-pub fn builder_expression_test() {
-  builder_expression.render()
+pub fn tree_expression_test() {
+  tree_expression.render()
   |> should.equal("Hello Anna and Bob, good to meet you\n")
 }
 
@@ -132,10 +132,9 @@ pub fn for_loop_from_expression_test() {
 }
 
 pub fn value_in_for_loop_test() {
-  value_in_for_loop.render(
-    greeting: "Hello",
-    my_list: ["Anna", "Bill", "Christine"],
-  )
+  value_in_for_loop.render(greeting: "Hello", my_list: [
+    "Anna", "Bill", "Christine",
+  ])
   |> should.equal(
     "<h1>My List</h1>
 <ul>

@@ -11,22 +11,22 @@ import gleam/list
 
 
 pub fn render_tree(my_list my_list: List(String)) -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "<ul>
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "<ul>
 ")
-    let builder = list.fold(my_list, builder, fn(builder, entry) {
-            let builder = string_tree.append(builder, "
+    let tree = list.fold(my_list, tree, fn(tree, entry) {
+            let tree = string_tree.append(tree, "
     <li>")
-    let builder = string_tree.append(builder, entry)
-    let builder = string_tree.append(builder, "</li>
+    let tree = string_tree.append(tree, entry)
+    let tree = string_tree.append(tree, "</li>
 ")
 
-        builder
+        tree
 })
-    let builder = string_tree.append(builder, "
+    let tree = string_tree.append(tree, "
 </ul>")
 
-    builder
+    tree
 }
 
 pub fn render(my_list my_list: List(String)) -> String {

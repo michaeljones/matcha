@@ -199,19 +199,19 @@ import gleam/list
 import my_user.{User}
 
 pub fn render_tree(user_obj user_obj: User) -> StringTree {
-  let builder = string_tree.from_string("")
-  let builder = string_tree.append(builder, "Hello")
-  let builder = case user_obj.is_admin {
+  let tree = string_tree.from_string("")
+  let tree = string_tree.append(tree, "Hello")
+  let tree = case user_obj.is_admin {
     True -> {
-      let builder = string_tree.append(builder, " Admin")
-      builder
+      let tree = string_tree.append(tree, " Admin")
+      tree
     }
-    False -> builder
+    False -> tree
   }
-  let builder = string_tree.append(builder, "
+  let tree = string_tree.append(tree, "
 ")
 
-  builder
+  tree
 }
 
 pub fn render(user_obj user_obj: User) -> String {

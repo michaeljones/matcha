@@ -10,7 +10,7 @@ pub enum RenderError {
 
 #[derive(Debug)]
 struct Context {
-    pub builder_lines: String,
+    pub tree_lines: String,
     pub imports: Vec<String>,
     pub functions: Vec<String>,
     pub typed_params: Vec<(String, String)>,
@@ -62,9 +62,9 @@ pub fn render(
         format!(
             r#"
 pub fn render_tree({params_string}) -> StringTree {{
-    let builder = string_tree.from_string("")
-{builder_lines}
-    builder
+    let tree = string_tree.from_string("")
+{tree_lines}
+    tree
 }}
 
 pub fn render({params_string}) -> String {{
@@ -72,7 +72,7 @@ pub fn render({params_string}) -> String {{
 }}
 "#,
             params_string = params_string,
-            builder_lines = context.builder_lines,
+            tree_lines = context.tree_lines,
             args_string = args_string
         )
     } else {
@@ -98,7 +98,7 @@ import gleam/string_tree.{{type StringTree}}
 }
 
 fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
-    let mut builder_lines = String::new();
+    let mut tree_lines = String::new();
     let mut imports = vec![];
     let mut functions = vec![];
 
@@ -113,8 +113,8 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
         match iter.peek() {
             Some(Node::Text(text)) => {
                 iter.next();
-                builder_lines.push_str(&format!(
-                    "    let builder = string_tree.append(builder, \"{}\")\n",
+                tree_lines.push_str(&format!(
+                    "    let tree = string_tree.append(tree, \"{}\")\n",
                     text.replace('\"', "\\\"")
                 ));
 
@@ -124,16 +124,16 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
             }
             Some(Node::Identifier(name)) => {
                 iter.next();
-                builder_lines.push_str(&format!(
-                    "    let builder = string_tree.append(builder, {})\n",
+                tree_lines.push_str(&format!(
+                    "    let tree = string_tree.append(tree, {})\n",
                     name
                 ));
                 has_template_content = true;
             }
             Some(Node::Builder(name)) => {
                 iter.next();
-                builder_lines.push_str(&format!(
-                    "    let builder = string_tree.append_tree(builder, {})\n",
+                tree_lines.push_str(&format!(
+                    "    let tree = string_tree.append_tree(tree, {})\n",
                     name
                 ));
                 has_template_content = true;
@@ -159,19 +159,19 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
                 iter.next();
                 let if_context = render_lines(&mut if_nodes.iter().peekable())?;
                 let else_context = render_lines(&mut else_nodes.iter().peekable())?;
-                builder_lines.push_str(&format!(
-                    r#"    let builder = case {} {{
+                tree_lines.push_str(&format!(
+                    r#"    let tree = case {} {{
         True -> {{
             {}
-            builder
+            tree
         }}
         False -> {{
             {}
-            builder
+            tree
         }}
 }}
 "#,
-                    identifier_name, if_context.builder_lines, else_context.builder_lines
+                    identifier_name, if_context.tree_lines, else_context.tree_lines
                 ));
                 includes_for_loop = includes_for_loop
                     || if_context.includes_for_loop
@@ -187,13 +187,13 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
                     .unwrap_or_else(|| "".to_string());
 
                 let loop_context = render_lines(&mut loop_nodes.iter().peekable())?;
-                builder_lines.push_str(&format!(
-                    r#"    let builder = list.fold({}, builder, fn(builder, {}{}) {{
+                tree_lines.push_str(&format!(
+                    r#"    let tree = list.fold({}, tree, fn(tree, {}{}) {{
         {}
-        builder
+        tree
 }})
 "#,
-                    list_identifier, entry_identifier, entry_type, loop_context.builder_lines
+                    list_identifier, entry_identifier, entry_type, loop_context.tree_lines
                 ));
 
                 includes_for_loop = true;
@@ -206,12 +206,12 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
                     Visibility::Public => "pub ",
                 };
                 let body_context = render_lines(&mut body_nodes.iter().peekable())?;
-                let body = body_context.builder_lines;
+                let body = body_context.tree_lines;
                 functions.push(format!(
                     r#"{visibility_text}fn {head} -> StringTree {{
-    let builder = string_tree.from_string("")
+    let tree = string_tree.from_string("")
 {body}
-    builder
+    tree
 }}"#,
                 ));
 
@@ -222,7 +222,7 @@ fn render_lines(iter: &mut NodeIter) -> Result<Context, RenderError> {
     }
 
     Ok(Context {
-        builder_lines,
+        tree_lines,
         imports,
         functions,
         typed_params,

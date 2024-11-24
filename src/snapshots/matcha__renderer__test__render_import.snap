@@ -10,10 +10,10 @@ import gleam/string_tree.{type StringTree}
 import user.{User}
 
 pub fn render_tree(name name: String) -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, name)
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, name)
 
-    builder
+    tree
 }
 
 pub fn render(name name: String) -> String {

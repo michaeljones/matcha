@@ -1,0 +1,33 @@
+---
+source: src/scanner.rs
+expression: "Hello {[ tree ]}, good to meet you"
+snapshot_kind: text
+---
+[
+    (
+        Text(
+            "Hello ",
+        ),
+        0..6,
+    ),
+    (
+        OpenBuilder,
+        6..7,
+    ),
+    (
+        IdentifierOrGleamToken(
+            "tree",
+        ),
+        9..13,
+    ),
+    (
+        CloseBuilder,
+        14..15,
+    ),
+    (
+        Text(
+            ", good to meet you",
+        ),
+        16..33,
+    ),
+]

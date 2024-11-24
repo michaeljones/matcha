@@ -10,32 +10,32 @@ import gleam/string_tree.{type StringTree}
 
 
 pub fn render_tree(is_user is_user: Bool, is_admin is_admin: Bool) -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "Hello ")
-    let builder = case is_user {
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "Hello ")
+    let tree = case is_user {
         True -> {
-                let builder = case is_admin {
+                let tree = case is_admin {
         True -> {
-                let builder = string_tree.append(builder, "Admin")
+                let tree = string_tree.append(tree, "Admin")
 
-            builder
+            tree
         }
         False -> {
-                let builder = string_tree.append(builder, "User")
+                let tree = string_tree.append(tree, "User")
 
-            builder
+            tree
         }
 }
 
-            builder
+            tree
         }
         False -> {
             
-            builder
+            tree
         }
 }
 
-    builder
+    tree
 }
 
 pub fn render(is_user is_user: Bool, is_admin is_admin: Bool) -> String {

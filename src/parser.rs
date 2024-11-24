@@ -481,12 +481,12 @@ mod test {
     }
 
     #[test]
-    fn test_parse_builder_block() {
+    fn test_parse_tree_block() {
         assert_parse!("Hello {[ name ]}, good to meet you");
     }
 
     #[test]
-    fn test_parse_builder_expression() {
+    fn test_parse_tree_expression() {
         assert_parse!("Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 

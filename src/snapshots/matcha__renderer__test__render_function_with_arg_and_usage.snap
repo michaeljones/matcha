@@ -8,19 +8,19 @@ snapshot_kind: text
 import gleam/string_tree.{type StringTree}
 
 fn full_name(second_name: String) -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "Lucy ")
-    let builder = string_tree.append(builder, second_name)
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "Lucy ")
+    let tree = string_tree.append(tree, second_name)
 
-    builder
+    tree
 }
 
 pub fn render_tree() -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "Hello ")
-    let builder = string_tree.append_tree(builder, full_name("Gleam"))
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "Hello ")
+    let tree = string_tree.append_tree(tree, full_name("Gleam"))
 
-    builder
+    tree
 }
 
 pub fn render() -> String {

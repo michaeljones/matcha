@@ -10,12 +10,12 @@ import gleam/string_tree.{type StringTree}
 
 
 pub fn render_tree() -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "Hello ")
-    let builder = string_tree.append_tree(builder, string_tree.from_strings(["Anna", " and ", "Bob"]))
-    let builder = string_tree.append(builder, ", good to meet you")
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "Hello ")
+    let tree = string_tree.append_tree(tree, string_tree.from_strings(["Anna", " and ", "Bob"]))
+    let tree = string_tree.append(tree, ", good to meet you")
 
-    builder
+    tree
 }
 
 pub fn render() -> String {

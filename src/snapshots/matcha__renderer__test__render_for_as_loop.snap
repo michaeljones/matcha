@@ -11,18 +11,18 @@ import gleam/list
 
 
 pub fn render_tree(list list: List(Item)) -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "Hello,")
-    let builder = list.fold(list, builder, fn(builder, item: Item) {
-            let builder = string_tree.append(builder, " to ")
-    let builder = string_tree.append(builder, item)
-    let builder = string_tree.append(builder, " and ")
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "Hello,")
+    let tree = list.fold(list, tree, fn(tree, item: Item) {
+            let tree = string_tree.append(tree, " to ")
+    let tree = string_tree.append(tree, item)
+    let tree = string_tree.append(tree, " and ")
 
-        builder
+        tree
 })
-    let builder = string_tree.append(builder, " everyone else")
+    let tree = string_tree.append(tree, " everyone else")
 
-    builder
+    tree
 }
 
 pub fn render(list list: List(Item)) -> String {

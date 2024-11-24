@@ -8,17 +8,17 @@ snapshot_kind: text
 import gleam/string_tree.{type StringTree}
 
 fn classes() -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "a b c d")
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "a b c d")
 
-    builder
+    tree
 }
 
 pub fn render_tree() -> StringTree {
-    let builder = string_tree.from_string("")
-    let builder = string_tree.append(builder, "Hello world")
+    let tree = string_tree.from_string("")
+    let tree = string_tree.append(tree, "Hello world")
 
-    builder
+    tree
 }
 
 pub fn render() -> String {

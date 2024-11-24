@@ -1,6 +1,7 @@
 ---
 source: src/parser.rs
 expression: "Hello {[ name ]}, good to meet you"
+snapshot_kind: text
 ---
 [
     Text(
