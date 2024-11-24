@@ -366,7 +366,10 @@ mod test {
 
     use super::*;
 
+    // Our only use of this is the Debug output but the compiler's dead code analysis ignores
+    // Debug usage so we have to allow dead_code here
     #[derive(Debug)]
+    #[expect(dead_code)]
     pub enum Error {
         Scan(ScanError),
         Parse(ParserError),
