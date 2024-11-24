@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.19.0
+
+- **Breaking change**: Templates now use the `StringTree` type from the standard library instead of the `StringBuilder`
+  type which has been deprecated. This means that projects using `matcha` should use `gleam_stdlib >= 0.42.0`.
+
+  Generated template modules now expose a `render_tree` function instead of `render_builder`. They continue to expose
+  a `render` function as before.
+
 ## 0.18.0
 
 - Changed to only generating the `.gleam` output if the `.matcha` file has a newer modified timestamp than the `.gleam`
