@@ -1,4 +1,4 @@
-import gleam/string_builder
+import gleam/string_tree
 import gleeunit
 import gleeunit/should
 import my_user.{NamedUser, User}
@@ -55,7 +55,7 @@ pub fn double_identifier_usage_test() {
 }
 
 pub fn builder_block_test() {
-  let name_builder = string_builder.from_strings(["Anna", " ", "Bandana"])
+  let name_builder = string_tree.from_strings(["Anna", " ", "Bandana"])
   builder.render(name_builder)
   |> should.equal("Hello Anna Bandana, good to meet you\n")
 }

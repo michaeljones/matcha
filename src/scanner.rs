@@ -534,7 +534,7 @@ mod test {
 
     #[test]
     fn test_scan_builder_expression() {
-        assert_scan!("Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
+        assert_scan!("Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you");
     }
 
     #[test]

@@ -18,8 +18,8 @@ text. Matcha generates well typed code that avoids issues that some more dynamic
 
 That said, if you're planning to generate structured output, it is sensible to use a better suited approach. For data
 formats, this should be serialization and deserialization libraries. For formats like HTML, you would likely be better
-using a library like [lustre](https://hexdocs.pm/lustre/lustre/element.html#to_string_builder) or
-[nakai](https://github.com/nakaixo/nakai).
+using a library like [lustre](https://hexdocs.pm/lustre/lustre/element.html#to_string_tree) or
+[nakai](https://hexdocs.pm/nakai/nakai.html#to_string_tree).
 
 ## Installation
 
@@ -45,7 +45,7 @@ files it finds.
 
 Template files should have a `.matcha` extension. Templates are compiled into `.gleam` files that can
 be imported like any other regular module. The modules expose a `render` function, that returns a
-`String`, and `render_builder` function that returns a `StringBuilder`.
+`String`, and `render_builder` function that returns a `StringTree`.
 
 Some errors, mostly syntax, will be picked up by the Rust code but it is possible to generate
 invalid modules and so the Gleam compiler will pick up further errors.
@@ -77,16 +77,16 @@ You can use `{{ name }}` syntax to insert the value of `name` into the rendered 
 Hello {{ name }}
 ```
 
-### String Builder Value
+### StringTree Value
 
-You can use `{[ name ]}` syntax to insert a string builder value into the rendered template. This
+You can use `{[ name ]}` syntax to insert a `StringTree` value into the rendered template. This
 has the advantage of using
-[string_builder.append_builder](https://hexdocs.pm/gleam_stdlib/gleam/string_builder.html#append_builder)
+[string_tree.append_tree](https://hexdocs.pm/gleam_stdlib/gleam/string_tree.html#append_tree)
 in the rendered template and so it more efficient for inserting content that is already in a
-`StringBuilder`. This can be used to insert content from another template.
+`StringTree`. This can be used to insert content from another template.
 
 ```jinja
-{> with name as StringBuilder
+{> with name as StringTree
 {[ name ]}
 ```
 
@@ -146,7 +146,7 @@ Lucy {{ second_name }}
 {> endfn
 ```
 
-The function always returns a `StringBuilder` value so you must use `{[ ... ]}` syntax to insert
+The function always returns a `StringTree` value so you must use `{[ ... ]}` syntax to insert
 them into templates. The function body has its last new line trimmed, so the above function called
 as `full_name("Gleam")` would result in `Lucy Gleam` and not `\nLucy Gleam\n` or any other
 variation. If you want a trailing new line in the output then add an extra blank line before the `{> endfn`.
@@ -194,28 +194,28 @@ Hello{% if user_obj.is_admin %} Admin{% endif %}
 is compiled to a Gleam module:
 
 ```gleam
-import gleam/string_builder.{StringBuilder}
+import gleam/string_tree.{StringTree}
 import gleam/list
 import my_user.{User}
 
-pub fn render_builder(user_obj user_obj: User) -> StringBuilder {
-  let builder = string_builder.from_string("")
-  let builder = string_builder.append(builder, "Hello")
+pub fn render_builder(user_obj user_obj: User) -> StringTree {
+  let builder = string_tree.from_string("")
+  let builder = string_tree.append(builder, "Hello")
   let builder = case user_obj.is_admin {
     True -> {
-      let builder = string_builder.append(builder, " Admin")
+      let builder = string_tree.append(builder, " Admin")
       builder
     }
     False -> builder
   }
-  let builder = string_builder.append(builder, "
+  let builder = string_tree.append(builder, "
 ")
 
   builder
 }
 
 pub fn render(user_obj user_obj: User) -> String {
-  string_builder.to_string(render_builder(user_obj: user_obj))
+  string_tree.to_string(render_builder(user_obj: user_obj))
 }
 ```
 
@@ -226,5 +226,3 @@ Which you can import and call `render` or `render_builder` on with the appropria
 Rust tests can be run with `cargo test`. They use [insta](http://insta.rs/) for snapshots.
 
 Gleam tests can be run with `cargo run && gleam test`.
-
-

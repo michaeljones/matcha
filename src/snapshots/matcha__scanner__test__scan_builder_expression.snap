@@ -1,6 +1,7 @@
 ---
 source: src/scanner.rs
-expression: "Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you"
+expression: "Hello {[ string_tree.from_strings([\"Anna\", \" and \", \"Bob\"]) ]}, good to meet you"
+snapshot_kind: text
 ---
 [
     (
@@ -15,42 +16,42 @@ expression: "Hello {[ string_builder.from_strings([\"Anna\", \" and \", \"Bob\"]
     ),
     (
         IdentifierOrGleamToken(
-            "string_builder.from_strings([\"Anna\",",
+            "string_tree.from_strings([\"Anna\",",
         ),
-        9..45,
+        9..42,
     ),
     (
         IdentifierOrGleamToken(
             "\"",
         ),
-        46..47,
+        43..44,
     ),
     (
         IdentifierOrGleamToken(
             "and",
         ),
-        48..51,
+        45..48,
     ),
     (
         IdentifierOrGleamToken(
             "\",",
         ),
-        52..54,
+        49..51,
     ),
     (
         IdentifierOrGleamToken(
             "\"Bob\"])",
         ),
-        55..62,
+        52..59,
     ),
     (
         CloseBuilder,
-        63..64,
+        60..61,
     ),
     (
         Text(
             ", good to meet you",
         ),
-        65..82,
+        62..79,
     ),
 ]
