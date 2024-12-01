@@ -8,6 +8,8 @@
   Generated template modules now expose a `render_tree` function instead of `render_builder`. They continue to expose
   a `render` function as before.
 
+  Thank you to @diemogebhardt for implementing this.
+
 ## 0.18.0
 
 - Changed to only generating the `.gleam` output if the `.matcha` file has a newer modified timestamp than the `.gleam`
